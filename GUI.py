@@ -1,13 +1,13 @@
 import wx
-import wx.lib.agw.aui as aui
-import wx.lib.mixins.inspection as wit
+# import wx.lib.agw.aui as aui
+# import wx.lib.mixins.inspection as wit
 
-import matplotlib as mpl
+# import matplotlib as mpl
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import (
     NavigationToolbar2WxAgg as NavigationToolbar,
 )
-import matplotlib.backends.backend_wxagg as wxagg
+# import matplotlib.backends.backend_wxagg as wxagg
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 
@@ -64,25 +64,16 @@ class MyFrame(wx.Frame):
         self.SetSizer(self.mainSizer)
         self.Fit()
 
-        # self.Bind(wx.EVT_PAINT, self.OnPaint)
-
-
 class MyPanel(wx.Panel):
     def __init__(self, parent):
         super(MyPanel, self).__init__(parent=parent)
-        # self.SetAutoLayout(True)
-        # self.InitPanel()
-        # self.graph = wx.Panel()
-        # self.graphs = wx.Panel()
 
     def show_buttons(self):
         hbox = wx.BoxSizer(wx.VERTICAL)
-        # self.my_text = wx.TextCtrl(self, style=wx.TE_MULTILINE)
         self.btn = wx.Button(self, label="Open Text File")
         self.btn.Bind(wx.EVT_BUTTON, self.on_open)
 
         # -----------------
-        # self.cwd = os.path.join(os.getcwd(), 'Refraction_index')
         self.cwd = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), "Refraction_index"
         )
@@ -91,7 +82,6 @@ class MyPanel(wx.Panel):
         self.wvlngh, self.n_coef = refection_coef_read(
             os.path.join(self.cwd, refl_files[0])
         )
-        # print('Real Path: ', self.cwd+refl_files[0])
         cb = wx.ComboBox(
             self, choices=refl_files, style=wx.CB_READONLY, value=refl_files[0]
         )
@@ -107,13 +97,7 @@ class MyPanel(wx.Panel):
 
         self.chk_box = wx.CheckBox(self, label="Full Report")
 
-        # self.reset_btn = wx.Button(self, label='Reset')
-        # self.reset_btn.Enable(False)
-        # self.reset_btn.Bind(wx.EVT_BUTTON, self.onReset)
-
-        # hbox2.Add(self.my_text, 1, wx.ALL|wx.EXPAND)
         hbox.Add(self.btn, 0, wx.CENTER, 5)
-        # hbox.Add(self.reset_btn, 0, wx.CENTER, 5)
         hbox.Add(self.calc_btn, 0, wx.CENTER | wx.BOTTOM, 10)
         hbox.Add(self.st, 0, wx.EXPAND | wx.ALIGN_CENTER_HORIZONTAL | wx.TOP, 5)
         hbox.Add(cb, 0, wx.EXPAND | wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 1)
@@ -127,7 +111,6 @@ class MyPanel(wx.Panel):
 
     def onReset(self, event):
         self.Parent.Restore()
-        # GetApp().OnInit()
 
     def on_open(self, event):
 
@@ -147,16 +130,7 @@ class MyPanel(wx.Panel):
         if os.path.exists(path):
             self.data = np.loadtxt(path)
 
-        # self.graph.axes.clear()
-        # self.graph.axes.grid(True)
-        # self.graph.axes.plot(self.data[:,0], self.data[:, 1])
-        # # self.Layout()
-        # self.graph.canvas.draw()
-
         self.calc_btn.Enable(False)
-
-        # self.graph.axes.clear()
-        # self.graph.toolbar.update()
 
         draw_data(self.graph, self.data[:, 0], self.data[:, 1], name="Spectrum")
 
@@ -191,7 +165,7 @@ class MyPanel(wx.Panel):
         dial.ShowModal()
         self.calc_btn.Enable(False)
 
-    def data_prep(self):
+    def data_prep(self) -> (np.ndarray, np.ndarray, float, float, float):
         self.x = self.graph.toolbar.x[1:]
         self.graph.toolbar.x[:] = []
         self.x.sort()
@@ -381,16 +355,12 @@ class MyPanel(wx.Panel):
 
         self.Fit()
 
-    # def draw_new_graph(self, fig_size=(5,5)):
-
-    #     draw_graph(self, fig_size=(5,5)):
 
     def draw_graph(self, fig_size=(5, 5), is_special=True, dpi=100):
         self.figure = Figure(figsize=fig_size, dpi=dpi)
         self.axes = self.figure.add_subplot()
         self.cursor = Cursor(self.axes, useblit=True, color="red")
         self.canvas = FigureCanvas(self, -1, self.figure)
-        # self.figure.canvas.mpl_connect('key_press_event', self.on_key)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 0, wx.LEFT | wx.TOP)
@@ -405,21 +375,6 @@ class MyPanel(wx.Panel):
         self.SetSizer(self.sizer)
         self.Fit()
 
-    # def on_key(self, event):
-    #     """If the user presses the Escape key then stop picking points and
-    #     reset the list of picked points."""
-    #     # if 'escape' == event.key:
-    #     #     self._is_pick_started = False
-    #     #     self._picked_indices = None
-    #     # return
-    #     ax = self.canvas.figure.axes[0]
-    #     x, y = np.random.rand(2)  # generate a random location
-    #     rgb = np.random.rand(3)  # generate a random color
-    #     ax.text(x, y, 'You clicked me', transform=ax.transAxes, color=rgb)
-    #     self.canvas.draw()
-    #     # evt.Skip()
-
-    # def add_toolbar(self):
 
 
 class MyNavigationToolbar(NavigationToolbar):
@@ -514,8 +469,8 @@ class MyNavigationToolbar(NavigationToolbar):
 
 def draw_data(
     graphNum,
-    x,
-    y,
+    x: np.ndarray,
+    y: np.ndarray,
     style="-",
     text=None,
     scatter_x=None,
@@ -571,12 +526,12 @@ def draw_data(
     graphNum.toolbar.update()
 
 
-def find_nearest(array, value):
+def find_nearest(array: np.ndarray, value: float) -> float:
     array = np.asarray(array)
     return (np.abs(array - value)).argmin()
 
 
-def get_files_list(path_to_dir):
+def get_files_list(path_to_dir: str) -> np.ndarray:
     f = []
 
     if os.path.exists(path_to_dir):
@@ -586,22 +541,19 @@ def get_files_list(path_to_dir):
     return np.array(f)
 
 
-def refection_coef_read(path_to_file):
+def refection_coef_read(path_to_file: str) -> (np.ndarray, np.ndarray):
     if os.path.exists(path_to_file):
         n_lam = pd.read_csv(
-            path_to_file, header=None, delimiter=",", encoding="utf-8"
-        ).rename(columns={0: "x", 1: "y"})
-    wvlngh = n_lam["x"].values
-    n_coef = n_lam["y"].values
-
-    return wvlngh, n_coef
+            path_to_file, header=0, delimiter=",", encoding="utf-8", names=["x", "y"]
+        )
+    return n_lam["x"].values, n_lam["y"].values
 
 
-def thickness(wavelength, period, n):
-    return np.round(wavelength * wavelength / (2.0 * n * period * 10000.0), 2)
+def thickness(wavelength: float, period: float, n: float) -> float:
+    return np.round(wavelength ** 2 / (2.0 * n * period * 10000.0), 2)
 
 
-def fourier_analysis(x, y):
+def fourier_analysis(x: np.ndarray, y: np.ndarray) -> (np.ndarray, np.ndarray, float, float):
     # sig_fft = np.fft.fft(y)
     # # power = np.abs(sig_fft)
     # sample_freq = np.fft.fftfreq(y.shape[-1], (x[0]-x[-1])/(len(x)-1))

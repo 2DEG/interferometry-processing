@@ -1,29 +1,27 @@
 import wx
-# import wx.lib.agw.aui as aui
-# import wx.lib.mixins.inspection as wit
 
-# import matplotlib as mpl
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import (
     NavigationToolbar2WxAgg as NavigationToolbar,
 )
-# import matplotlib.backends.backend_wxagg as wxagg
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 
-# mpl.use('WXAgg')
+from typing import Tuple
+
 import pkg_resources.py2_warn
 
 from scipy.signal import find_peaks
+
 import pandas as pd
 
 import numpy as np
 import os
 
-# from win32api import GetSystemMetrics
-
 
 class MyApp(wx.App):
+    """Main application class."""
+
     def __init__(self):
         super(MyApp, self).__init__(clearSigInt=True)
 
@@ -32,13 +30,20 @@ class MyApp(wx.App):
 
 
 class MyFrame(wx.Frame):
-    def __init__(self, parent, title="Thickness Interferometry", pos=(100, 100)):
-        # super(MyFrame, self).__init__(parent, title=title, size=(800, 600), pos=pos)
+    """Class which generates a frame.
+    
+    All of the visual positioning of the blocks are described here.
+    """
+
+    def __init__(
+        self, parent, title="Thickness Interferometry", pos=(100, 100)
+    ) -> None:
+
         super(MyFrame, self).__init__(parent, title=title, pos=pos)
         self.init_frame()
         self.SetBackgroundColour("white")
 
-    def init_frame(self):
+    def init_frame(self) -> None:
         # Sizers
         self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.graphSizer = wx.BoxSizer()
@@ -64,11 +69,14 @@ class MyFrame(wx.Frame):
         self.SetSizer(self.mainSizer)
         self.Fit()
 
+
 class MyPanel(wx.Panel):
-    def __init__(self, parent):
+    """Custom panel class."""
+
+    def __init__(self, parent: MyFrame) -> None:
         super(MyPanel, self).__init__(parent=parent)
 
-    def show_buttons(self):
+    def show_buttons(self) -> None:
         hbox = wx.BoxSizer(wx.VERTICAL)
         self.btn = wx.Button(self, label="Open Text File")
         self.btn.Bind(wx.EVT_BUTTON, self.on_open)
@@ -80,15 +88,20 @@ class MyPanel(wx.Panel):
 
         refl_files = get_files_list(self.cwd)
         self.wvlngh, self.n_coef = refection_coef_read(
-            os.path.join(self.cwd, refl_files[0])
+            os.path.join(self.cwd, refl_files[1])
         )
         cb = wx.ComboBox(
-            self, choices=refl_files, style=wx.CB_READONLY, value=refl_files[0]
+            self, choices=refl_files, style=wx.CB_READONLY, value=refl_files[1]
         )
         cb.Bind(wx.EVT_COMBOBOX, self.on_select)
         self.st = wx.StaticText(self, label="")
         self.st.SetLabel("Refractive index file:")
         # -----------------
+
+        self.auto = wx.Button(self, label="Auto GaAs depth")
+        self.auto.Enable(False)
+        self.auto.Bind(wx.EVT_BUTTON, self.calc_auto)
+        # ------------------
 
         self.calc_btn = wx.Button(self, label="Calculate depth")
         self.calc_btn.Enable(False)
@@ -98,6 +111,7 @@ class MyPanel(wx.Panel):
         self.chk_box = wx.CheckBox(self, label="Full Report")
 
         hbox.Add(self.btn, 0, wx.CENTER, 5)
+        hbox.Add(self.auto, 0, wx.CENTER, 5)
         hbox.Add(self.calc_btn, 0, wx.CENTER | wx.BOTTOM, 10)
         hbox.Add(self.st, 0, wx.EXPAND | wx.ALIGN_CENTER_HORIZONTAL | wx.TOP, 5)
         hbox.Add(cb, 0, wx.EXPAND | wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 1)
@@ -105,14 +119,11 @@ class MyPanel(wx.Panel):
 
         self.SetSizer(hbox)
 
-    def on_select(self, event):
+    def on_select(self, event: wx.Event) -> None:
         i = event.GetString()
         self.wvlngh, self.n_coef = refection_coef_read(os.path.join(self.cwd, i))
 
-    def onReset(self, event):
-        self.Parent.Restore()
-
-    def on_open(self, event):
+    def on_open(self, event: wx.Event) -> None:
 
         wildcard = "TXT files (*.txt)|*.txt"
         dialog = wx.FileDialog(
@@ -134,16 +145,16 @@ class MyPanel(wx.Panel):
 
         draw_data(self.graph, self.data[:, 0], self.data[:, 1], name="Spectrum")
 
+        self.auto.Enable(True)
+
         if self.graphs.IsShown():
             self.graphs.Hide()
             self.graph.Show()
 
         self.Parent.Layout()
-        # self.Parent.graphSizer.Layout()
         self.Parent.Fit()
 
-    def calc_choice(self, event):
-
+    def calc_choice(self, event: wx.Event) -> None:
         if self.chk_box.GetValue():
             self.make_report(*self.data_prep())
         else:
@@ -152,9 +163,22 @@ class MyPanel(wx.Panel):
                 self.graph.toolbar.lx.pop(0).remove()
             self.graph.canvas.draw()
 
+    def calc_auto(self, event: wx.Event) -> None:
+        self.graph.toolbar.x = [0, 9050.0, 9200.0]
+        self.ShowMessage1(*self.data_prep())
+        while self.graph.toolbar.lx:
+            self.graph.toolbar.lx.pop(0).remove()
+        self.graph.canvas.draw()
+
     def ShowMessage1(
-        self, dat_X=None, dat_Y=None, wavelength=9000, n_wv_idx=None, n_true=3.54
-    ):
+        self,
+        dat_X: np.ndarray = None,
+        dat_Y: np.ndarray = None,
+        wavelength: float = 9000.0,
+        n_wv_idx: float = None,
+        n_true: float = 3.54,
+    ) -> None:
+        """Draws the message box with info about sample thickness."""
 
         self.psd, self.freq, true_freq, true_ind = fourier_analysis(dat_X, dat_Y)
         msg = "Sample thickness is {h} um".format(
@@ -165,7 +189,8 @@ class MyPanel(wx.Panel):
         dial.ShowModal()
         self.calc_btn.Enable(False)
 
-    def data_prep(self) -> (np.ndarray, np.ndarray, float, float, float):
+    def data_prep(self) -> Tuple[np.ndarray, np.ndarray, float, float, float]:
+        """Prepares data to be analysed."""
         self.x = self.graph.toolbar.x[1:]
         self.graph.toolbar.x[:] = []
         self.x.sort()
@@ -187,18 +212,16 @@ class MyPanel(wx.Panel):
         return dat_X, dat_Y, wavelength, n_wv_idx, n_true
 
     def make_report(
-        self, dat_X=None, dat_Y=None, wavelength=9000, n_wv_idx=None, n_true=3.54
-    ):
+        self,
+        dat_X: np.ndarray = None,
+        dat_Y: np.ndarray = None,
+        wavelength: float = 9000.0,
+        n_wv_idx: float = None,
+        n_true=3.54,
+    ) -> None:
+        """Draws another panel covered with plots filled with additional info."""
+
         self.calc_btn.Enable(False)
-
-        # dial.ShowModal()
-
-        # if self.graph.IsShown():
-        #     self.graph.Hide()
-        #     self.graphs.Show()
-
-        # # self.Parent.graphSizer.SendSizeEvent()
-        # self.Parent.graphSizer.Layout()
 
         # dial = wx.ProgressDialog('Progress', 'Computation could take some time', maximum=100, parent=self)
         # dial.Update(5)
@@ -248,13 +271,16 @@ class MyPanel(wx.Panel):
         reverse = np.zeros_like(dat_Y)
         reverse[self.psd == true_ind] = true_freq
         # print('Reverse:', reverse)
-        reverse = np.fft.ifft(reverse)
+        reverse = np.real(np.fft.ifft(reverse))
 
         ## Flattening Process
         coef = np.polyfit(dat_X, dat_Y, 1)
         poly1d_fn = np.poly1d(coef)
         new_dat = dat_Y - poly1d_fn(dat_X)
 
+        self.psd, self.freq, true_freq, true_ind = fourier_analysis(
+            dat_X, new_dat - 200 * reverse
+        )
         textstr = "\n".join(
             (
                 r"$h=%.2f$ um" % (thickness(wavelength, 1 / true_freq, n_true),),
@@ -262,16 +288,12 @@ class MyPanel(wx.Panel):
                 r"$\rho=%.2f\AA$" % (1 / true_freq,),
             )
         )
-
-        self.psd, self.freq, true_freq, true_ind = fourier_analysis(
-            dat_X, new_dat - 200 * reverse
-        )
         new_dat = new_dat / new_dat.max()
         draw_data(
             self.graphs.graphTwo,
             self.freq,
             self.psd,
-            style="o",
+            # style="o",
             text=textstr,
             name="FFT after signal flattening",
             x_label=r"Frequency $[\frac{1}{\AA}]$",
@@ -306,17 +328,15 @@ class MyPanel(wx.Panel):
         )
         # dial.Update(100)
 
-        # self.Parent.Layout()
         if self.graph.IsShown():
             self.graph.Hide()
             self.graphs.Show()
 
-        # self.Parent.graphSizer.SendSizeEvent()
-        # self.Parent.graphSizer.Layout()
         self.Parent.Layout()
         self.Parent.Fit()
 
-    def draw_graphs(self):
+    def draw_graphs(self) -> None:
+        """Prepares canvas for 6 additional plots with supportive info."""
 
         self.column = wx.BoxSizer(wx.VERTICAL)
         self.firstLine = wx.BoxSizer()
@@ -355,8 +375,14 @@ class MyPanel(wx.Panel):
 
         self.Fit()
 
+    def draw_graph(
+        self,
+        fig_size: Tuple[int, int] = (5, 5),
+        is_special: bool = True,
+        dpi: int = 100,
+    ) -> None:
+        """Creates plot."""
 
-    def draw_graph(self, fig_size=(5, 5), is_special=True, dpi=100):
         self.figure = Figure(figsize=fig_size, dpi=dpi)
         self.axes = self.figure.add_subplot()
         self.cursor = Cursor(self.axes, useblit=True, color="red")
@@ -369,6 +395,7 @@ class MyPanel(wx.Panel):
         self.toolbar.Realize()
 
         self.sizer.Add(self.toolbar, 0, wx.LEFT)
+
         # update the axes menu on the toolbar
         self.toolbar.update()
 
@@ -376,21 +403,13 @@ class MyPanel(wx.Panel):
         self.Fit()
 
 
-
 class MyNavigationToolbar(NavigationToolbar):
     """Extend the default wx toolbar with your own event handlers."""
 
-    def __init__(self, canvas, is_special=True):
-        # self.Parent.SetToolBitmapSize(wx.Size(3, 2))
+    def __init__(self, canvas: FigureCanvas, is_special: bool = True) -> None:
         NavigationToolbar.__init__(self, canvas)
-        # We use a stock wx bitmap, but you could also use your own image file.
         POSITION_OF_CONFIGURE_SUBPLOTS_BTN = 6
         self.DeleteToolByPos(POSITION_OF_CONFIGURE_SUBPLOTS_BTN)
-        # self.DCsize = tuple(self.GetClientSize()/10)
-        # print(self.DCsize)
-        # self.SetToolBitmapSize(wx.Size(3, 2))
-        # print(self.GetToolSize())
-        # self.SetToolBitmapSize(self.DCsize)
 
         if is_special:
             bmp = wx.ArtProvider.GetBitmap(wx.ART_CROSS_MARK, wx.ART_TOOLBAR)
@@ -402,7 +421,7 @@ class MyNavigationToolbar(NavigationToolbar):
         self.lines = []
         self.x = []
 
-    def _on_custom(self, evt):
+    def _on_custom(self, evt: wx.Event) -> None:
         self.ax = self.canvas.figure.axes[0]
         self.cid = self.canvas.figure.canvas.mpl_connect(
             "button_press_event", self.on_press
@@ -410,23 +429,9 @@ class MyNavigationToolbar(NavigationToolbar):
         self.move = self.canvas.figure.canvas.mpl_connect(
             "motion_notify_event", self.on_curser
         )
-        # self.pick = self.canvas.figure.canvas.mpl_connect('pick_event', self.on_pick)
         self.lx = []
-        # props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        # self.text = self.ax.text(0.05, 0.95, transform=self.ax.transAxes, fontsize=11, verticalalignment='top', bbox=props)
 
-    # def pick(self, event):
-
-    #     if text != None:
-    #         # str_ = 'h = ' + str(text) + ' um'
-    #         # graphNum.axes.text(1.0, y.max(), str_)
-    #         # these are matplotlib.patch.Patch properties
-    #         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-
-    #         # place a text box in upper left in axes coords
-    #         self.ax.text(0.05, 0.95, text, transform=graphNum.axes.transAxes, fontsize=size, verticalalignment='top', bbox=props)
-
-    def on_press(self, event):
+    def on_press(self, event: wx.Event) -> None:
         self.background = self.canvas.figure.canvas.copy_from_bbox(
             self.canvas.figure.bbox
         )
@@ -439,7 +444,6 @@ class MyNavigationToolbar(NavigationToolbar):
             self.canvas.draw()
 
         else:
-            # self.background = self.canvas.figure.canvas.copy_from_bbox(self.canvas.figure.bbox)
             self.x.append(event.xdata)
             self.lx.append(self.ax.axvline(event.xdata, color="k"))
             self.clicks = True
@@ -451,57 +455,49 @@ class MyNavigationToolbar(NavigationToolbar):
             self.Parent.Parent.control.calc_btn.Enable(True)
             self.counter = 0
 
-    def on_curser(self, event):
+    def on_curser(self, event: wx.Event) -> None:
         if not event.inaxes:
             return
 
         if self.lx != []:
             line = self.lx[-1]
             line.set_xdata(event.xdata)
-            # self.text.set_text('X: {x}'.format(x= event.xdata))
-            # self.canvas.restore_region(self.canvas.copy_from_bbox(self.Parent.figure.bbox))
             self.canvas.restore_region(self.background)
             self.Parent.axes.draw_artist(line)
             self.canvas.figure.canvas.blit(line.axes.bbox)
-            # self.canvas.blit(line.get_window_extent())
-        # self.canvas.draw()
 
 
 def draw_data(
-    graphNum,
+    graphNum: MyPanel,
     x: np.ndarray,
     y: np.ndarray,
     style="-",
-    text=None,
-    scatter_x=None,
-    scatter_y=None,
-    name=None,
-    label_l="Peaks",
-    size=9,
-    clear=True,
-    x_label=r"Wavelength $[\AA]$",
-    y_label="Intensity",
-):
+    text: str = None,
+    scatter_x: np.ndarray = None,
+    scatter_y: np.ndarray = None,
+    name: str = None,
+    label_l: str = "Peaks",
+    size: int = 9,
+    clear: bool = True,
+    x_label: str = r"Wavelength $[\AA]$",
+    y_label: str = "Intensity",
+) -> None:
+    """Draws data on plot."""
+
     scatter_x = [] if scatter_x is None else scatter_x
     scatter_y = [] if scatter_y is None else scatter_y
 
     if clear:
         graphNum.axes.clear()
         graphNum.toolbar.update()
-    # graphNum.axes.clear()
     graphNum.axes.grid(True)
-    # graphNum.axes.set_xlabel(r'$\Delta_i^j$')
-    # graphNum.axes.set_ylabel(r'$\Delta_{i+1}^j$')
     graphNum.axes.plot(x, y, style)
     graphNum.axes.set_xlabel(x_label)
     graphNum.axes.set_ylabel(y_label)
-    # graphNum.axes.autoscale(tight=True)
     graphNum.axes.ticklabel_format(style="sci", useMathText=True, scilimits=(0, 0))
-    # graphNum.axes.set_scientific(True)
 
     if text != None:
-        # str_ = 'h = ' + str(text) + ' um'
-        # graphNum.axes.text(1.0, y.max(), str_)
+
         # these are matplotlib.patch.Patch properties
         props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
 
@@ -527,11 +523,15 @@ def draw_data(
 
 
 def find_nearest(array: np.ndarray, value: float) -> float:
+    """Finds closest value in array for given one."""
+
     array = np.asarray(array)
     return (np.abs(array - value)).argmin()
 
 
 def get_files_list(path_to_dir: str) -> np.ndarray:
+    """Returns list of files in given directory."""
+
     f = []
 
     if os.path.exists(path_to_dir):
@@ -541,7 +541,9 @@ def get_files_list(path_to_dir: str) -> np.ndarray:
     return np.array(f)
 
 
-def refection_coef_read(path_to_file: str) -> (np.ndarray, np.ndarray):
+def refection_coef_read(path_to_file: str) -> Tuple[np.ndarray, np.ndarray]:
+    """Reads the data for reflection coefficient from file."""
+
     if os.path.exists(path_to_file):
         n_lam = pd.read_csv(
             path_to_file, header=0, delimiter=",", encoding="utf-8", names=["x", "y"]
@@ -550,41 +552,27 @@ def refection_coef_read(path_to_file: str) -> (np.ndarray, np.ndarray):
 
 
 def thickness(wavelength: float, period: float, n: float) -> float:
+    """Calculates the thickness of the sample using interference method."""
+
     return np.round(wavelength ** 2 / (2.0 * n * period * 10000.0), 2)
 
 
-def fourier_analysis(x: np.ndarray, y: np.ndarray) -> (np.ndarray, np.ndarray, float, float):
-    # sig_fft = np.fft.fft(y)
-    # # power = np.abs(sig_fft)
-    # sample_freq = np.fft.fftfreq(y.shape[-1], (x[0]-x[-1])/(len(x)-1))
-    # # freq = np.fft.fftfreq(y.shape[-1], )
-    # mask = sample_freq > 0
-    # ind = np.arange(1, int(y.shape[-1]/2) + 1)
-    # # print(ind)
-    # power = np.abs(sig_fft[ind])**2 + np.abs(sig_fft[-ind])**2
-    # return power, sample_freq
-    ########################
+def fourier_analysis(
+    x: np.ndarray, y: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray, float, float]:
+    """Perfoms FFT and searches for main frequencies."""
+
     sp = np.fft.fft(y)
-    # sp = np.fft.fftshift(sp)
     freq = np.fft.fftfreq(y.shape[-1], np.diff(x).mean())
-    # freq = np.fft.fftshift(freq)
-    # mask = freq > 0
-    # ind = np.arange(1, int(y.shape[-1]/2))
-
-    # print(ind)
-    # psd = np.abs(sp[ind])**2 + np.abs(sp[-ind])**2
     psd = np.abs(sp)
-    # peaks, _ = find_peaks(psd, height=0.25, width=2)
-    # peaks.sort()
-    # print("Freq: ", freq[-peaks])
-    # plt.plot(freq[-ind], psd, 'o')
-    # masl = freq > 0.1
-    # true_ind = (freq > 0.2)
-    true_freq = freq
-    true_freq = true_freq[true_freq > 0.2]
-    true_psd = psd[freq > 0.2]
+    new_freq = freq[freq > 0.12]
+    new_psd = psd[freq > 0.12]
+    maxInd, _ = find_peaks(new_psd)
 
-    return psd, freq, true_freq[true_psd.argmax()], true_psd.max()
+    true_freq = new_freq[maxInd]
+    true_psd = new_psd[maxInd]
+
+    return psd, freq, true_freq[true_psd == true_psd.max()], true_psd.max()
 
 
 if __name__ == "__main__":

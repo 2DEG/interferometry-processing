@@ -165,7 +165,7 @@ class MyPanel(wx.Panel):
 
     def calc_auto(self, event: wx.Event) -> None:
         self.graph.toolbar.x = [0, 9050.0, 9200.0]
-        self.ShowMessage1(*self.data_prep())
+        self.ShowMessage2(*self.data_prep())
         while self.graph.toolbar.lx:
             self.graph.toolbar.lx.pop(0).remove()
         self.graph.canvas.draw()
@@ -184,6 +184,38 @@ class MyPanel(wx.Panel):
         msg = "Sample thickness is {h} um".format(
             h=thickness(wavelength, 1 / true_freq, n_true)
         )
+
+        dial = wx.MessageDialog(None, msg, "Info", wx.OK)
+        dial.ShowModal()
+        self.calc_btn.Enable(False)
+
+    def ShowMessage2(
+        self,
+        dat_X: np.ndarray = None,
+        dat_Y: np.ndarray = None,
+        wavelength: float = 9000.0,
+        n_wv_idx: float = None,
+        n_true: float = 3.54,
+    ) -> None:
+        """Draws the message box with info about sample thickness."""
+
+        # self.psd, self.freq, true_freq, true_ind = fourier_analysis(dat_X, dat_Y)
+        idx, _ = find_peaks(dat_Y)
+        fragments = rolling_window(dat_X[idx] / 10000.0, 2)
+
+        dist = np.array(
+            list(
+                map(lambda x: adv_dist_calc(waveln_1=x[0], waveln_2=x[1],), fragments,)
+            )
+        )
+
+        # wv_add = wv_add[:-1]
+        # n_add = sellmeyer_eq(wv_add)
+        d_mean = np.round(dist.mean())
+        # m = np.round(2 * n_add * d_mean / wv_add)
+        # d_new = m * wv_add / (2 * n_add)
+
+        msg = "Sample thickness is {h} um".format(h=d_mean)
 
         dial = wx.MessageDialog(None, msg, "Info", wx.OK)
         dial.ShowModal()
@@ -237,16 +269,22 @@ class MyPanel(wx.Panel):
             name="Peaks detection",
         )
         periodicity = pd.Series(dat_X[idx], index=dat_X[idx]).diff().dropna()
-        period = (
-            periodicity.rolling(window=10, center=True)
-            .mean()
-            .values[
-                int(
-                    periodicity.rolling(window=10, center=True).mean().values.shape[-1]
-                    / 2
-                )
-            ]
-        )
+
+        # n_add = self.n_coef[np.array(
+        #     list(map(lambda x: find_nearest(self.wvlngh, x / 10000.0), dat_X[idx]))[:-1]
+        # )]
+
+        # print(dist, dist.mean(), dist.std(), dist.shape, wv_add.shape, n_add.shape)
+        # print(m)
+
+        # print("Thickness:", dist)
+        # print("wv_add:", wv_add)
+        print(d_new.mean(), d_mean)
+        # print("N_ADD:", n_add)
+
+        periodicity_mean = periodicity.rolling(window=10, center=True).mean().values
+
+        period = periodicity_mean[int(periodicity_mean.shape[-1] / 2)]
         thickness(wavelength, period, n_true)
 
         textstr = "\n".join(
@@ -260,7 +298,8 @@ class MyPanel(wx.Panel):
         draw_data(
             self.graphs.graphOne,
             periodicity.index.values,
-            periodicity.rolling(window=10, center=True).mean().values,
+            # periodicity.rolling(window=10, center=True).mean().values,
+            periodicity_mean,
             name="Average periodicity",
             text=textstr,
         )
@@ -440,6 +479,7 @@ class MyNavigationToolbar(NavigationToolbar):
         if self.clicks:
             self.x.append(event.xdata)
             self.lx.append(self.ax.axvline(event.xdata, color="k"))
+            # print(type(self.lx))
             self.clicks = False
             self.canvas.draw()
 
@@ -529,6 +569,22 @@ def find_nearest(array: np.ndarray, value: float) -> float:
     return (np.abs(array - value)).argmin()
 
 
+def adv_dist_calc(waveln_1: float, waveln_2: float) -> float:
+    return np.abs(
+        waveln_1
+        * waveln_2
+        / (2 * (waveln_1 * sellmeyer_eq(waveln_2) - waveln_2 * sellmeyer_eq(waveln_1)))
+    )
+
+
+def rolling_window(a: np.ndarray, window: int) -> np.ndarray:
+    """Returns rolling windows."""
+
+    shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
+    strides = a.strides + (a.strides[-1],)
+    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
+
 def get_files_list(path_to_dir: str) -> np.ndarray:
     """Returns list of files in given directory."""
 
@@ -555,6 +611,34 @@ def thickness(wavelength: float, period: float, n: float) -> float:
     """Calculates the thickness of the sample using interference method."""
 
     return np.round(wavelength ** 2 / (2.0 * n * period * 10000.0), 2)
+
+
+def sellmeyer_eq(
+    wavelength: np.ndarray, a: float = 8.950, b: float = 2.054, c2: float = 0.390
+) -> np.ndarray:
+    """Returns refractive index for given wavelength.
+    
+    The Sellmeier equation is an empirical relationship between refractive 
+    index and wavelength for a particular transparent medium. 
+    The equation is used to determine the dispersion of light
+    in the medium. Default values corresponds to GaAs at room
+    temperature.
+    
+    Args:
+        wavelength: List of wavelengths.
+        a: empirical coefficient, default value is given for GaAs
+        b: empirical coefficient, default value is given for GaAs
+        c2: empirical coefficient, default value is given for GaAs
+        keys: A sequence of strings representing the key of each table row
+            to fetch.
+        other_silly_variable: Another optional variable, that has a much
+            longer name than the other args, and which does nothing.
+
+    Returns:
+        List of refractive indexes.
+    """
+
+    return np.sqrt(a + b / (1 - c2 / wavelength ** 2))
 
 
 def fourier_analysis(

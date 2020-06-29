@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 
 from typing import Tuple
-from typing import Optional
+from typing import Tuple, Optional
 
 import pkg_resources.py2_warn
 

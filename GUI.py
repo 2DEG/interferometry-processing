@@ -250,22 +250,13 @@ class MyPanel(wx.Panel):
         periodicity_mean = periodicity.rolling(window=10, center=True).mean().values
 
         period = periodicity_mean[int(periodicity_mean.shape[-1] / 2)]
-        thickness(wavelength, period, n_true)
-
-        textstr = "\n".join(
-            (
-                r"$h=%.2f$ um" % (thickness(wavelength, period, n_true),),
-                r"$f =%.2f \frac{1}{\AA}$" % (1 / period,),
-                r"$\rho=%.2f\AA$" % (period,),
-            )
-        )
 
         draw_data(
             self.graphs.graphOne,
             periodicity.index.values,
             periodicity_mean,
             name="Average periodicity",
-            text=textstr,
+            text=textstr(wavelength, period, n_true),
         )
         # dial.Update(20)
 
@@ -283,20 +274,14 @@ class MyPanel(wx.Panel):
         self.psd, self.freq, true_freq, true_ind = fourier_analysis(
             dat_X, new_dat - 200 * reverse
         )
-        textstr = "\n".join(
-            (
-                r"$h=%.2f$ um" % (thickness(wavelength, 1 / true_freq, n_true),),
-                r"$f =%.2f \frac{1}{\AA}$" % (true_freq,),
-                r"$\rho=%.2f\AA$" % (1 / true_freq,),
-            )
-        )
         new_dat = new_dat / new_dat.max()
+
         draw_data(
             self.graphs.graphTwo,
             self.freq,
             self.psd,
             # style="o",
-            text=textstr,
+            text=textstr(wavelength, 1 / true_freq, n_true),
             name="FFT after signal flattening",
             x_label=r"Frequency $[\frac{1}{\AA}]$",
         )
@@ -324,9 +309,13 @@ class MyPanel(wx.Panel):
         )
         # dial.Update(60)
 
-        textstr = r"$h=\frac{\lambda^2}{2n \Delta\lambda}$"
         draw_data(
-            self.graphs.graphSix, 0, 0, text=textstr, name="Execution Formula", size=16
+            self.graphs.graphSix,
+            0,
+            0,
+            text=r"$h=\frac{\lambda^2}{2n \Delta\lambda}$",
+            name="Execution Formula",
+            size=16,
         )
         # dial.Update(100)
 
@@ -379,7 +368,7 @@ class MyPanel(wx.Panel):
 
     def draw_graph(
         self,
-        fig_size: Tuple[int, int] = (5, 5),
+        fig_size: Tuple[float, float] = (5.0, 5.0),
         is_special: bool = True,
         dpi: int = 100,
     ) -> None:
@@ -539,12 +528,14 @@ def adv_dist_calc(waveln_1: float, waveln_2: float) -> float:
         / (2 * (waveln_1 * sellmeyer_eq(waveln_2) - waveln_2 * sellmeyer_eq(waveln_1)))
     )
 
+
 def rolling_window(a: np.ndarray, window: int) -> np.ndarray:
     """Returns rolling windows."""
 
     shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
     strides = a.strides + (a.strides[-1],)
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
 
 def rolling_dist(
     dat_X: Optional[np.ndarray] = None, dat_Y: Optional[np.ndarray] = None,
@@ -591,6 +582,17 @@ def thickness(wavelength: float, period: float, n: float) -> float:
     """Calculates the thickness of the sample using interference method."""
 
     return np.round(wavelength ** 2 / (2.0 * n * period * 10000.0), 2)
+
+
+def textstr(wvln: float, period: float, n_true: float) -> str:
+
+    return "\n".join(
+        (
+            r"$h=%.2f$ um" % (thickness(wvln, period, n_true),),
+            r"$f =%.2f \frac{1}{\AA}$" % (1 / period,),
+            r"$\rho=%.2f\AA$" % (period,),
+        )
+    )
 
 
 def sellmeyer_eq(

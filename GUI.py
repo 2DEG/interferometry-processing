@@ -8,6 +8,7 @@ from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 
 from typing import Tuple
+from typing import Optional
 
 import pkg_resources.py2_warn
 
@@ -155,67 +156,43 @@ class MyPanel(wx.Panel):
         self.Parent.Fit()
 
     def calc_choice(self, event: wx.Event) -> None:
+        """Executes calculation based on checked/unchecked box."""
+
         if self.chk_box.GetValue():
             self.make_report(*self.data_prep())
         else:
-            self.ShowMessage1(*self.data_prep())
+            self.ShowMessage(*self.data_prep())
             while self.graph.toolbar.lx:
                 self.graph.toolbar.lx.pop(0).remove()
             self.graph.canvas.draw()
 
     def calc_auto(self, event: wx.Event) -> None:
+        """Returns thickness of the sample in a message box."""
+
         self.graph.toolbar.x = [0, 9050.0, 9200.0]
-        self.ShowMessage2(*self.data_prep())
+        self.ShowMessage(*self.data_prep(), auto_ga_as=True)
         while self.graph.toolbar.lx:
             self.graph.toolbar.lx.pop(0).remove()
         self.graph.canvas.draw()
 
-    def ShowMessage1(
+    def ShowMessage(
         self,
-        dat_X: np.ndarray = None,
-        dat_Y: np.ndarray = None,
+        dat_X: Optional[np.ndarray] = None,
+        dat_Y: Optional[np.ndarray] = None,
         wavelength: float = 9000.0,
-        n_wv_idx: float = None,
+        n_wv_idx: Optional[float] = None,
         n_true: float = 3.54,
+        auto_ga_as: bool = False,
     ) -> None:
         """Draws the message box with info about sample thickness."""
 
-        self.psd, self.freq, true_freq, true_ind = fourier_analysis(dat_X, dat_Y)
-        msg = "Sample thickness is {h} um".format(
-            h=thickness(wavelength, 1 / true_freq, n_true)
-        )
+        if auto_ga_as:
+            h = rolling_dist(dat_X=dat_X, dat_Y=dat_Y)
+        else:
+            self.psd, self.freq, true_freq, true_ind = fourier_analysis(dat_X, dat_Y)
+            h = thickness(wavelength, 1 / true_freq, n_true)
 
-        dial = wx.MessageDialog(None, msg, "Info", wx.OK)
-        dial.ShowModal()
-        self.calc_btn.Enable(False)
-
-    def ShowMessage2(
-        self,
-        dat_X: np.ndarray = None,
-        dat_Y: np.ndarray = None,
-        wavelength: float = 9000.0,
-        n_wv_idx: float = None,
-        n_true: float = 3.54,
-    ) -> None:
-        """Draws the message box with info about sample thickness."""
-
-        # self.psd, self.freq, true_freq, true_ind = fourier_analysis(dat_X, dat_Y)
-        idx, _ = find_peaks(dat_Y)
-        fragments = rolling_window(dat_X[idx] / 10000.0, 2)
-
-        dist = np.array(
-            list(
-                map(lambda x: adv_dist_calc(waveln_1=x[0], waveln_2=x[1],), fragments,)
-            )
-        )
-
-        # wv_add = wv_add[:-1]
-        # n_add = sellmeyer_eq(wv_add)
-        d_mean = np.round(dist.mean())
-        # m = np.round(2 * n_add * d_mean / wv_add)
-        # d_new = m * wv_add / (2 * n_add)
-
-        msg = "Sample thickness is {h} um".format(h=d_mean)
+        msg = "Sample thickness is {h} um".format(h=h)
 
         dial = wx.MessageDialog(None, msg, "Info", wx.OK)
         dial.ShowModal()
@@ -245,10 +222,10 @@ class MyPanel(wx.Panel):
 
     def make_report(
         self,
-        dat_X: np.ndarray = None,
-        dat_Y: np.ndarray = None,
+        dat_X: Optional[np.ndarray] = None,
+        dat_Y: Optional[np.ndarray] = None,
         wavelength: float = 9000.0,
-        n_wv_idx: float = None,
+        n_wv_idx: Optional[float] = None,
         n_true=3.54,
     ) -> None:
         """Draws another panel covered with plots filled with additional info."""
@@ -270,18 +247,6 @@ class MyPanel(wx.Panel):
         )
         periodicity = pd.Series(dat_X[idx], index=dat_X[idx]).diff().dropna()
 
-        # n_add = self.n_coef[np.array(
-        #     list(map(lambda x: find_nearest(self.wvlngh, x / 10000.0), dat_X[idx]))[:-1]
-        # )]
-
-        # print(dist, dist.mean(), dist.std(), dist.shape, wv_add.shape, n_add.shape)
-        # print(m)
-
-        # print("Thickness:", dist)
-        # print("wv_add:", wv_add)
-        print(d_new.mean(), d_mean)
-        # print("N_ADD:", n_add)
-
         periodicity_mean = periodicity.rolling(window=10, center=True).mean().values
 
         period = periodicity_mean[int(periodicity_mean.shape[-1] / 2)]
@@ -298,7 +263,6 @@ class MyPanel(wx.Panel):
         draw_data(
             self.graphs.graphOne,
             periodicity.index.values,
-            # periodicity.rolling(window=10, center=True).mean().values,
             periodicity_mean,
             name="Average periodicity",
             text=textstr,
@@ -309,7 +273,6 @@ class MyPanel(wx.Panel):
         self.psd, self.freq, true_freq, true_ind = fourier_analysis(dat_X, dat_Y)
         reverse = np.zeros_like(dat_Y)
         reverse[self.psd == true_ind] = true_freq
-        # print('Reverse:', reverse)
         reverse = np.real(np.fft.ifft(reverse))
 
         ## Flattening Process
@@ -512,10 +475,10 @@ def draw_data(
     x: np.ndarray,
     y: np.ndarray,
     style="-",
-    text: str = None,
-    scatter_x: np.ndarray = None,
-    scatter_y: np.ndarray = None,
-    name: str = None,
+    text: Optional[str] = None,
+    scatter_x: Optional[np.ndarray] = None,
+    scatter_y: Optional[np.ndarray] = None,
+    name: Optional[str] = None,
     label_l: str = "Peaks",
     size: int = 9,
     clear: bool = True,
@@ -576,13 +539,30 @@ def adv_dist_calc(waveln_1: float, waveln_2: float) -> float:
         / (2 * (waveln_1 * sellmeyer_eq(waveln_2) - waveln_2 * sellmeyer_eq(waveln_1)))
     )
 
-
 def rolling_window(a: np.ndarray, window: int) -> np.ndarray:
     """Returns rolling windows."""
 
     shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
     strides = a.strides + (a.strides[-1],)
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
+def rolling_dist(
+    dat_X: Optional[np.ndarray] = None, dat_Y: Optional[np.ndarray] = None,
+) -> float:
+    """Returns mean of distances obtained using rolling windows."""
+
+    idx, _ = find_peaks(dat_Y)
+    fragments = rolling_window(dat_X[idx] / 10000.0, 2)
+    dist = np.array(
+        list(map(lambda x: adv_dist_calc(waveln_1=x[0], waveln_2=x[1],), fragments,))
+    )
+
+    # wv_add = wv_add[:-1]
+    # n_add = sellmeyer_eq(wv_add)
+    # d_mean = np.round(dist.mean())
+    # m = np.round(2 * n_add * d_mean / wv_add)
+    # d_new = m * wv_add / (2 * n_add)
+    return np.round(dist.mean())
 
 
 def get_files_list(path_to_dir: str) -> np.ndarray:

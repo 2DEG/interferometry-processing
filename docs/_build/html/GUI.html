@@ -1,0 +1,518 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>GUI module &#8212; interferometry-processing 0.5 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="main module" href="main.html" />
+    <link rel="prev" title="interferometry-processing" href="modules.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-GUI">
+<span id="gui-module"></span><h1>GUI module<a class="headerlink" href="#module-GUI" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="GUI.MyApp">
+<em class="property">class </em><code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">MyApp</code><a class="headerlink" href="#GUI.MyApp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">wx.core.App</span></code></p>
+<p>Main application class.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="GUI.MyFrame">
+<em class="property">class </em><code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">MyFrame</code><span class="sig-paren">(</span><em class="sig-param">parent</em>, <em class="sig-param">title='Thickness Interferometry'</em>, <em class="sig-param">pos=(100</em>, <em class="sig-param">100)</em><span class="sig-paren">)</span><a class="headerlink" href="#GUI.MyFrame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">wx._core.Frame</span></code></p>
+<p>Class which generates a frame.</p>
+<p>All of the visual positioning of the blocks are described here.</p>
+<dl class="method">
+<dt id="GUI.MyFrame.init_frame">
+<code class="sig-name descname">init_frame</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyFrame.init_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes all the panels and set sizers.</p>
+<p>There are 3 panels: control panel for control buttons, graph panel
+for raw data visualization and preperation and graphs panel which
+switches from graph panel and shows stages of data process.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>None</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="GUI.MyNavigationToolbar">
+<em class="property">class </em><code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">MyNavigationToolbar</code><span class="sig-paren">(</span><em class="sig-param">canvas: matplotlib.backends.backend_wxagg.FigureCanvasWxAgg</em>, <em class="sig-param">is_special: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#GUI.MyNavigationToolbar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.backends.backend_wx.NavigationToolbar2Wx</span></code></p>
+<p>Extend the default wx toolbar with your own event handlers.</p>
+<dl class="method">
+<dt id="GUI.MyNavigationToolbar.on_curser">
+<code class="sig-name descname">on_curser</code><span class="sig-paren">(</span><em class="sig-param">event: wx._core.Event</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyNavigationToolbar.on_curser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw the line that follows the cursor.</p>
+<p>Data may be limited on two sides. After drawing the first border, the second follows the cursor.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>event: button_press_event</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyNavigationToolbar.on_press">
+<code class="sig-name descname">on_press</code><span class="sig-paren">(</span><em class="sig-param">event: wx._core.Event</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyNavigationToolbar.on_press" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw the line on click.</p>
+<p>Draws vertical lines when the user sets the boundaries of the range of data analysis.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>event: button_press_event</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="GUI.MyPanel">
+<em class="property">class </em><code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">MyPanel</code><span class="sig-paren">(</span><em class="sig-param">parent: GUI.MyFrame</em><span class="sig-paren">)</span><a class="headerlink" href="#GUI.MyPanel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">wx._core.Panel</span></code></p>
+<p>Custom panel class.</p>
+<dl class="method">
+<dt id="GUI.MyPanel.ShowMessage">
+<code class="sig-name descname">ShowMessage</code><span class="sig-paren">(</span><em class="sig-param">dat_X: Optional[numpy.ndarray] = None</em>, <em class="sig-param">dat_Y: Optional[numpy.ndarray] = None</em>, <em class="sig-param">wavelength: float = 9000.0</em>, <em class="sig-param">n_wv_idx: Optional[float] = None</em>, <em class="sig-param">n_true: float = 3.54</em>, <em class="sig-param">auto_ga_as: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.ShowMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws the message box with info about sample thickness.</p>
+<p>Starts a quick thickness calculation and displays a dialog box with the correct answer.</p>
+<dl>
+<dt>Args:</dt><dd><p>dat_X: raw data X (wavelength)</p>
+<p>dat_Y: raw data Y (intensity)</p>
+<p>wavelength: the wavelength for which the thickness will be calculated</p>
+<p>n_wv_idx: deprecated positional argument</p>
+<p>n_true: value of appropriate refractive index for given wavelength</p>
+<p>auto_ga_as: boolean flag for auto calculation</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.calc_auto">
+<code class="sig-name descname">calc_auto</code><span class="sig-paren">(</span><em class="sig-param">event: wx._core.Event</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.calc_auto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns thickness of the sample in a message box.</p>
+<p>One can run thickness calculation without marking data boundaries
+and choosing reflective coefficient values (valid for GaAs samples). 
+In this case one may press “Auto GaAs depth” and this function will 
+automate the process.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>event: wx.EVT_BUTTON</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.calc_choice">
+<code class="sig-name descname">calc_choice</code><span class="sig-paren">(</span><em class="sig-param">event: wx._core.Event</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.calc_choice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes calculation based on checked/unchecked box.</p>
+<p>If the Checkbox is marked then calculations are launched with detailed 
+information about each step. Otherwise a dialog box appears with thickness 
+information.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>event: wx.EVT_BUTTON</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.data_prep">
+<code class="sig-name descname">data_prep</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Tuple[numpy.ndarray, numpy.ndarray, float, float, float]<a class="headerlink" href="#GUI.MyPanel.data_prep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepares data to be analysed.</p>
+<p>Cuts data at user-specified boundaries and prepares them for depth calculations.
+Selects the average wavelength of the range and finds the corresponding refractive
+index.</p>
+<dl>
+<dt>Args:</dt><dd><p>event: wx.EVT_BUTTON</p>
+</dd>
+<dt>Returns:</dt><dd><p>dat_X: raw data X (wavelength)</p>
+<p>dat_Y: raw data Y (intensity)</p>
+<p>wavelength: the wavelength for which the thickness will be calculated</p>
+<p>n_wv_idx: index of n_true</p>
+<p>n_true: value of appropriate refractive index for given wavelength</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.draw_graph">
+<code class="sig-name descname">draw_graph</code><span class="sig-paren">(</span><em class="sig-param">fig_size: Tuple[float</em>, <em class="sig-param">float] = (5.0</em>, <em class="sig-param">5.0)</em>, <em class="sig-param">is_special: bool = True</em>, <em class="sig-param">dpi: int = 100</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.draw_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates plot.</p>
+<p>Prepare canvas and define figures.</p>
+<dl>
+<dt>Args:</dt><dd><p>fig_size: sets figure size</p>
+<p>is_special: flag for different kind of navigation tools on figure</p>
+<p>dpi: dpi</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.draw_graphs">
+<code class="sig-name descname">draw_graphs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.draw_graphs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepares canvas for 6 additional plots with supportive info.</p>
+<p>Defines 6 figures on the panel graphs. Sets sizers.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>None</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.make_report">
+<code class="sig-name descname">make_report</code><span class="sig-paren">(</span><em class="sig-param">dat_X: numpy.ndarray</em>, <em class="sig-param">dat_Y: numpy.ndarray</em>, <em class="sig-param">wavelength: float = 9000.0</em>, <em class="sig-param">n_wv_idx: Optional[float] = None</em>, <em class="sig-param">n_true=3.54</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.make_report" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws another panel covered with plots filled with additional info.</p>
+<p>Performs full calculations of sample thickness. Draws graphs of all the 
+intermediate steps on the graphs panel.</p>
+<dl>
+<dt>Args:</dt><dd><p>dat_X: raw data X (wavelength)</p>
+<p>dat_Y: raw data Y (intensity)</p>
+<p>wavelength: the wavelength for which the thickness will be calculated</p>
+<p>n_wv_idx: deprecated positional argument</p>
+<p>n_true: value of appropriate refractive index for given wavelength</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.on_open">
+<code class="sig-name descname">on_open</code><span class="sig-paren">(</span><em class="sig-param">event: wx._core.Event</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.on_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a raw data to process.</p>
+<p>When user clicks on “Open Text File” and find an appropriate file, 
+this function imports the data to <cite>self.data</cite> and plots it on graph
+panel.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>event: wx.EVT_COMBOBOX. Checks that user have clicked on button.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.on_select">
+<code class="sig-name descname">on_select</code><span class="sig-paren">(</span><em class="sig-param">event: wx._core.Event</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.on_select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates refractive index data due to chosen source.</p>
+<p>When the user selects an item in the drop-down menu, the new refractive index data is read from the selected file.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>event: wx.EVT_BUTTON. Checks that user have picked a member of the list.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="GUI.MyPanel.show_buttons">
+<code class="sig-name descname">show_buttons</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.MyPanel.show_buttons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes all of the buttons.</p>
+<p>Buttons are placed at control panel. All the buttons use event-handlers
+to react on user activity and make an appropriate functions call.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>None</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.adv_dist_calc">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">adv_dist_calc</code><span class="sig-paren">(</span><em class="sig-param">waveln_1: float</em>, <em class="sig-param">waveln_2: float</em><span class="sig-paren">)</span> &#x2192; float<a class="headerlink" href="#GUI.adv_dist_calc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thickness calculation method.</p>
+<p>Calculation of thickness from exact wavelengths and refractive index. This
+method is used with rolling windows approach which result with good accuracy.</p>
+<dl>
+<dt>Args:</dt><dd><p>waveln_1: first wavelength</p>
+<p>waveln_2: first wavelength</p>
+</dd>
+<dt>Returns:</dt><dd><p>sample thickness</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.draw_data">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">draw_data</code><span class="sig-paren">(</span><em class="sig-param">graphNum: GUI.MyPanel</em>, <em class="sig-param">x: numpy.ndarray</em>, <em class="sig-param">y: numpy.ndarray</em>, <em class="sig-param">style='-'</em>, <em class="sig-param">text: Optional[str] = None</em>, <em class="sig-param">scatter_x: Union[numpy.ndarray</em>, <em class="sig-param">List[float]] = None</em>, <em class="sig-param">scatter_y: Union[numpy.ndarray</em>, <em class="sig-param">List[float]] = None</em>, <em class="sig-param">name: Optional[str] = None</em>, <em class="sig-param">label_l: str = 'Peaks'</em>, <em class="sig-param">size: int = 9</em>, <em class="sig-param">clear: bool = True</em>, <em class="sig-param">x_label: str = 'Wavelength $[\\AA]$'</em>, <em class="sig-param">y_label: str = 'Intensity'</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#GUI.draw_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws data.</p>
+<p>Draws data that it takes on the figure that is takes.</p>
+<dl>
+<dt>Args:</dt><dd><p>graphNum: shows on which particular canvas to draw</p>
+<p>x: data for axis-X</p>
+<p>y: data for axis-Y</p>
+<p>style: sets a style of plot</p>
+<p>text: text that would be written on plot</p>
+<p>scatter_x: data for axis-X (scatter style)</p>
+<p>scatter_y: data for axis-Y (scatter style)</p>
+<p>name: name of the plot</p>
+<p>label_l: labels if any</p>
+<p>size: fontsize</p>
+<p>clear: one may want to clear the plot</p>
+<p>x_label: str = Label to the axis-X</p>
+<p>y_label: str = Label to the axis-X</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.find_nearest">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">find_nearest</code><span class="sig-paren">(</span><em class="sig-param">array: numpy.ndarray</em>, <em class="sig-param">value: float</em><span class="sig-paren">)</span> &#x2192; float<a class="headerlink" href="#GUI.find_nearest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds closest value in array for given one.</p>
+<p>Searches for the argument of the array element that is closest to some given value.</p>
+<dl>
+<dt>Args:</dt><dd><p>array: the array in which the element will be searched</p>
+<p>value: value for search</p>
+</dd>
+<dt>Returns:</dt><dd><p>index of the array element of closest value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.fourier_analysis">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">fourier_analysis</code><span class="sig-paren">(</span><em class="sig-param">x: numpy.ndarray</em>, <em class="sig-param">y: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; Tuple[numpy.ndarray, numpy.ndarray, float, float]<a class="headerlink" href="#GUI.fourier_analysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs FFT and searches for main frequencies.</p>
+<dl>
+<dt>Args:</dt><dd><p>x: array of wavelengths</p>
+<p>y: array of intensities</p>
+</dd>
+<dt>Returns:</dt><dd><p>psd: amplitudes</p>
+<p>freq: frequencies</p>
+<p>true_freq: frequency of interest</p>
+<p>true_psd_max: amplitude of interest</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.get_files_list">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">get_files_list</code><span class="sig-paren">(</span><em class="sig-param">path_to_dir: str</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#GUI.get_files_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns list of files in given directory.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>path_to_dir: path to directory</p>
+</dd>
+<dt>Returns:</dt><dd><p>list of files names</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.refection_coef_read">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">refection_coef_read</code><span class="sig-paren">(</span><em class="sig-param">path_to_file: str</em><span class="sig-paren">)</span> &#x2192; Tuple[numpy.ndarray, numpy.ndarray]<a class="headerlink" href="#GUI.refection_coef_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the data for reflection coefficient from file.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>path_to_file: path to file</p>
+</dd>
+<dt>Returns:</dt><dd><p>lists of wavelength and intensities</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.rolling_dist">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">rolling_dist</code><span class="sig-paren">(</span><em class="sig-param">dat_X: numpy.ndarray</em>, <em class="sig-param">dat_Y: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; float<a class="headerlink" href="#GUI.rolling_dist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns mean of distances obtained using rolling windows.</p>
+<p>Finds the distance between the intensity maxima. For each pair of highs,
+it considers the depth. Then it returns the average of all the resulting 
+thicknesses.</p>
+<dl>
+<dt>Args:</dt><dd><p>dat_X: array of wavelength</p>
+<p>dat_Y: array of intenseties</p>
+</dd>
+<dt>Returns:</dt><dd><p>mean value of thickness</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.rolling_window">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">rolling_window</code><span class="sig-paren">(</span><em class="sig-param">a: numpy.ndarray</em>, <em class="sig-param">window: int</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#GUI.rolling_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns rolling windows.</p>
+<dl>
+<dt>Args:</dt><dd><p>a: array</p>
+<p>window: number of element on the window</p>
+</dd>
+<dt>Returns:</dt><dd><p>window</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.sellmeyer_eq">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">sellmeyer_eq</code><span class="sig-paren">(</span><em class="sig-param">wavelength: numpy.ndarray</em>, <em class="sig-param">a: float = 8.95</em>, <em class="sig-param">b: float = 2.054</em>, <em class="sig-param">c2: float = 0.39</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#GUI.sellmeyer_eq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns refractive index for given wavelength.</p>
+<p>The Sellmeier equation is an empirical relationship between refractive 
+index and wavelength for a particular transparent medium. 
+The equation is used to determine the dispersion of light
+in the medium. Default values corresponds to GaAs at room
+temperature.</p>
+<dl>
+<dt>Args:</dt><dd><p>wavelength: List of wavelengths.</p>
+<p>a: empirical coefficient, default value is given for GaAs</p>
+<p>b: empirical coefficient, default value is given for GaAs</p>
+<p>c2: empirical coefficient, default value is given for GaAs</p>
+<dl class="simple">
+<dt>keys: A sequence of strings representing the key of each table row</dt><dd><p>to fetch.</p>
+</dd>
+<dt>other_silly_variable: Another optional variable, that has a much</dt><dd><p>longer name than the other args, and which does nothing.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>List of refractive indexes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.textstr">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">textstr</code><span class="sig-paren">(</span><em class="sig-param">wvln: float</em>, <em class="sig-param">period: float</em>, <em class="sig-param">n_true: float</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#GUI.textstr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the standard caption for a graph.</p>
+<dl>
+<dt>Args:</dt><dd><p>wvln: wavelength</p>
+<p>period: period between intensities maximums</p>
+<p>n_true: reflection coefficient for given wavelength</p>
+</dd>
+<dt>Returns:</dt><dd><p>caption</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="GUI.thickness">
+<code class="sig-prename descclassname">GUI.</code><code class="sig-name descname">thickness</code><span class="sig-paren">(</span><em class="sig-param">wavelength: float</em>, <em class="sig-param">period: float</em>, <em class="sig-param">n: float</em><span class="sig-paren">)</span> &#x2192; float<a class="headerlink" href="#GUI.thickness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the thickness of the sample using interference method.</p>
+<p>Simplified thickness calculation method</p>
+<dl>
+<dt>Args:</dt><dd><p>wavelength: wavelength</p>
+<p>period: period between intensities maximums</p>
+<p>n: reflection coefficient for given wavelength</p>
+</dd>
+<dt>Returns:</dt><dd><p>sample thickness</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">interferometry-processing</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">interferometry-processing</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">GUI module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html">main module</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">interferometry-processing</a><ul>
+      <li>Previous: <a href="modules.html" title="previous chapter">interferometry-processing</a></li>
+      <li>Next: <a href="main.html" title="next chapter">main module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Krynetskiy Dmitry Stanislavovich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/GUI.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

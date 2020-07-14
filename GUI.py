@@ -1,22 +1,21 @@
-import wx
+import wx  # type: ignore
 
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas  # type: ignore
 from matplotlib.backends.backend_wxagg import (
     NavigationToolbar2WxAgg as NavigationToolbar,
-)
-from matplotlib.figure import Figure
-from matplotlib.widgets import Cursor
+)  # type: ignore
+from matplotlib.figure import Figure  # type: ignore
+from matplotlib.widgets import Cursor  # type: ignore
 
-from typing import Tuple
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List, Union
 
-import pkg_resources.py2_warn
+import pkg_resources.py2_warn  # type: ignore
 
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks  # type: ignore
 
-import pandas as pd
+import pandas as pd  # type: ignore
 
-import numpy as np
+import numpy as np  # type: ignore
 import os
 
 
@@ -45,6 +44,18 @@ class MyFrame(wx.Frame):
         self.SetBackgroundColour("white")
 
     def init_frame(self) -> None:
+        """Initializes all the panels and set sizers.
+    
+        There are 3 panels: control panel for control buttons, graph panel
+        for raw data visualization and preperation and graphs panel which
+        switches from graph panel and shows stages of data process.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         # Sizers
         self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.graphSizer = wx.BoxSizer()
@@ -78,6 +89,18 @@ class MyPanel(wx.Panel):
         super(MyPanel, self).__init__(parent=parent)
 
     def show_buttons(self) -> None:
+        """Initializes all of the buttons.
+    
+        Buttons are placed at control panel. All the buttons use event-handlers
+        to react on user activity and make an appropriate functions call.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
         hbox = wx.BoxSizer(wx.VERTICAL)
         self.btn = wx.Button(self, label="Open Text File")
         self.btn.Bind(wx.EVT_BUTTON, self.on_open)
@@ -121,10 +144,33 @@ class MyPanel(wx.Panel):
         self.SetSizer(hbox)
 
     def on_select(self, event: wx.Event) -> None:
+        """Updates refractive index data due to chosen source.
+    
+        When the user selects an item in the drop-down menu, the new refractive index data is read from the selected file.
+
+        Args:
+            event: wx.EVT_BUTTON. Checks that user have picked a member of the list.
+
+        Returns:
+            None
+        """
+
         i = event.GetString()
         self.wvlngh, self.n_coef = refection_coef_read(os.path.join(self.cwd, i))
 
     def on_open(self, event: wx.Event) -> None:
+        """Open a raw data to process.
+    
+        When user clicks on "Open Text File" and find an appropriate file, 
+        this function imports the data to `self.data` and plots it on graph
+        panel.
+
+        Args:
+            event: wx.EVT_COMBOBOX. Checks that user have clicked on button.
+
+        Returns:
+            None
+        """
 
         wildcard = "TXT files (*.txt)|*.txt"
         dialog = wx.FileDialog(
@@ -156,7 +202,18 @@ class MyPanel(wx.Panel):
         self.Parent.Fit()
 
     def calc_choice(self, event: wx.Event) -> None:
-        """Executes calculation based on checked/unchecked box."""
+        """Executes calculation based on checked/unchecked box.
+    
+        If the Checkbox is marked then calculations are launched with detailed 
+        information about each step. Otherwise a dialog box appears with thickness 
+        information.
+
+        Args:
+            event: wx.EVT_BUTTON
+
+        Returns:
+            None
+        """
 
         if self.chk_box.GetValue():
             self.make_report(*self.data_prep())
@@ -167,7 +224,19 @@ class MyPanel(wx.Panel):
             self.graph.canvas.draw()
 
     def calc_auto(self, event: wx.Event) -> None:
-        """Returns thickness of the sample in a message box."""
+        """Returns thickness of the sample in a message box.
+    
+        One can run thickness calculation without marking data boundaries
+        and choosing reflective coefficient values (valid for GaAs samples). 
+        In this case one may press "Auto GaAs depth" and this function will 
+        automate the process.
+
+        Args:
+            event: wx.EVT_BUTTON
+
+        Returns:
+            None
+        """
 
         self.graph.toolbar.x = [0, 9050.0, 9200.0]
         self.ShowMessage(*self.data_prep(), auto_ga_as=True)
@@ -184,7 +253,26 @@ class MyPanel(wx.Panel):
         n_true: float = 3.54,
         auto_ga_as: bool = False,
     ) -> None:
-        """Draws the message box with info about sample thickness."""
+        """Draws the message box with info about sample thickness.
+    
+        Starts a quick thickness calculation and displays a dialog box with the correct answer.
+
+        Args:
+            dat_X: raw data X (wavelength)
+
+            dat_Y: raw data Y (intensity)
+
+            wavelength: the wavelength for which the thickness will be calculated
+
+            n_wv_idx: deprecated positional argument
+
+            n_true: value of appropriate refractive index for given wavelength
+
+            auto_ga_as: boolean flag for auto calculation
+
+        Returns:
+            None
+        """
 
         if auto_ga_as:
             h = rolling_dist(dat_X=dat_X, dat_Y=dat_Y)
@@ -199,13 +287,32 @@ class MyPanel(wx.Panel):
         self.calc_btn.Enable(False)
 
     def data_prep(self) -> Tuple[np.ndarray, np.ndarray, float, float, float]:
-        """Prepares data to be analysed."""
+        """Prepares data to be analysed.
+
+        Cuts data at user-specified boundaries and prepares them for depth calculations.
+        Selects the average wavelength of the range and finds the corresponding refractive
+        index.
+
+        Args:
+            event: wx.EVT_BUTTON
+
+        Returns:
+            dat_X: raw data X (wavelength)
+
+            dat_Y: raw data Y (intensity)
+
+            wavelength: the wavelength for which the thickness will be calculated
+
+            n_wv_idx: index of n_true
+
+            n_true: value of appropriate refractive index for given wavelength
+        """
         self.x = self.graph.toolbar.x[1:]
         self.graph.toolbar.x[:] = []
         self.x.sort()
 
         try:
-            self.x != []
+            len(self.x) != 0
         except:
             print("Processing range not specified")
 
@@ -222,13 +329,31 @@ class MyPanel(wx.Panel):
 
     def make_report(
         self,
-        dat_X: Optional[np.ndarray] = None,
-        dat_Y: Optional[np.ndarray] = None,
+        dat_X: np.ndarray,
+        dat_Y: np.ndarray,
         wavelength: float = 9000.0,
         n_wv_idx: Optional[float] = None,
         n_true=3.54,
     ) -> None:
-        """Draws another panel covered with plots filled with additional info."""
+        """Draws another panel covered with plots filled with additional info.
+    
+        Performs full calculations of sample thickness. Draws graphs of all the 
+        intermediate steps on the graphs panel.
+
+        Args:
+            dat_X: raw data X (wavelength)
+
+            dat_Y: raw data Y (intensity)
+
+            wavelength: the wavelength for which the thickness will be calculated
+
+            n_wv_idx: deprecated positional argument
+
+            n_true: value of appropriate refractive index for given wavelength
+
+        Returns:
+            None
+        """
 
         self.calc_btn.Enable(False)
 
@@ -327,7 +452,16 @@ class MyPanel(wx.Panel):
         self.Parent.Fit()
 
     def draw_graphs(self) -> None:
-        """Prepares canvas for 6 additional plots with supportive info."""
+        """Prepares canvas for 6 additional plots with supportive info.
+    
+        Defines 6 figures on the panel graphs. Sets sizers.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
 
         self.column = wx.BoxSizer(wx.VERTICAL)
         self.firstLine = wx.BoxSizer()
@@ -372,7 +506,20 @@ class MyPanel(wx.Panel):
         is_special: bool = True,
         dpi: int = 100,
     ) -> None:
-        """Creates plot."""
+        """Creates plot.
+    
+        Prepare canvas and define figures.
+
+        Args:
+            fig_size: sets figure size
+
+            is_special: flag for different kind of navigation tools on figure
+
+            dpi: dpi
+
+        Returns:
+            None
+        """
 
         self.figure = Figure(figsize=fig_size, dpi=dpi)
         self.axes = self.figure.add_subplot()
@@ -409,8 +556,8 @@ class MyNavigationToolbar(NavigationToolbar):
 
         self.counter = 0
         self.clicks = True
-        self.lines = []
-        self.x = []
+        # self.lines = []
+        self.x: List[np.float64] = []
 
     def _on_custom(self, evt: wx.Event) -> None:
         self.ax = self.canvas.figure.axes[0]
@@ -420,9 +567,19 @@ class MyNavigationToolbar(NavigationToolbar):
         self.move = self.canvas.figure.canvas.mpl_connect(
             "motion_notify_event", self.on_curser
         )
-        self.lx = []
+        self.lx: List[Figure.Line2D] = []
 
     def on_press(self, event: wx.Event) -> None:
+        """Draw the line on click.
+    
+        Draws vertical lines when the user sets the boundaries of the range of data analysis.
+
+        Args:
+            event: button_press_event
+
+        Returns:
+            None
+        """
         self.background = self.canvas.figure.canvas.copy_from_bbox(
             self.canvas.figure.bbox
         )
@@ -431,7 +588,6 @@ class MyNavigationToolbar(NavigationToolbar):
         if self.clicks:
             self.x.append(event.xdata)
             self.lx.append(self.ax.axvline(event.xdata, color="k"))
-            # print(type(self.lx))
             self.clicks = False
             self.canvas.draw()
 
@@ -448,10 +604,20 @@ class MyNavigationToolbar(NavigationToolbar):
             self.counter = 0
 
     def on_curser(self, event: wx.Event) -> None:
+        """Draw the line that follows the cursor.
+    
+        Data may be limited on two sides. After drawing the first border, the second follows the cursor.
+
+        Args:
+            event: button_press_event
+
+        Returns:
+            None
+        """
         if not event.inaxes:
             return
 
-        if self.lx != []:
+        if len(self.lx) != 0:
             line = self.lx[-1]
             line.set_xdata(event.xdata)
             self.canvas.restore_region(self.background)
@@ -465,8 +631,8 @@ def draw_data(
     y: np.ndarray,
     style="-",
     text: Optional[str] = None,
-    scatter_x: Optional[np.ndarray] = None,
-    scatter_y: Optional[np.ndarray] = None,
+    scatter_x: Union[np.ndarray, List[float]] = None,
+    scatter_y: Union[np.ndarray, List[float]] = None,
     name: Optional[str] = None,
     label_l: str = "Peaks",
     size: int = 9,
@@ -474,7 +640,40 @@ def draw_data(
     x_label: str = r"Wavelength $[\AA]$",
     y_label: str = "Intensity",
 ) -> None:
-    """Draws data on plot."""
+    """Draws data.
+    
+    Draws data that it takes on the figure that is takes.
+
+    Args:
+        graphNum: shows on which particular canvas to draw
+
+        x: data for axis-X
+
+        y: data for axis-Y
+
+        style: sets a style of plot
+
+        text: text that would be written on plot
+
+        scatter_x: data for axis-X (scatter style)
+
+        scatter_y: data for axis-Y (scatter style)
+
+        name: name of the plot
+
+        label_l: labels if any
+
+        size: fontsize
+
+        clear: one may want to clear the plot
+
+        x_label: str = Label to the axis-X
+
+        y_label: str = Label to the axis-X
+
+    Returns:
+        None
+    """
 
     scatter_x = [] if scatter_x is None else scatter_x
     scatter_y = [] if scatter_y is None else scatter_y
@@ -488,7 +687,7 @@ def draw_data(
     graphNum.axes.set_ylabel(y_label)
     graphNum.axes.ticklabel_format(style="sci", useMathText=True, scilimits=(0, 0))
 
-    if text != None:
+    if text is not None:
 
         # these are matplotlib.patch.Patch properties
         props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
@@ -504,10 +703,10 @@ def draw_data(
             bbox=props,
         )
 
-    if name != None:
+    if name is not None:
         graphNum.axes.set_title(name, fontsize=11)
 
-    if (scatter_x != []) & (scatter_y != []):
+    if (len(scatter_x) != 0) & (len(scatter_y) != 0):
         graphNum.axes.scatter(scatter_x, scatter_y, s=30, c="red", label=label_l)
         graphNum.axes.legend(fontsize=9)
     graphNum.canvas.draw()
@@ -515,13 +714,37 @@ def draw_data(
 
 
 def find_nearest(array: np.ndarray, value: float) -> float:
-    """Finds closest value in array for given one."""
+    """Finds closest value in array for given one.
+    
+    Searches for the argument of the array element that is closest to some given value.
+
+    Args:
+        array: the array in which the element will be searched
+
+        value: value for search
+
+    Returns:
+        index of the array element of closest value
+    """
 
     array = np.asarray(array)
     return (np.abs(array - value)).argmin()
 
 
 def adv_dist_calc(waveln_1: float, waveln_2: float) -> float:
+    """Thickness calculation method.
+    
+    Calculation of thickness from exact wavelengths and refractive index. This
+    method is used with rolling windows approach which result with good accuracy. 
+
+    Args:
+        waveln_1: first wavelength
+
+        waveln_2: first wavelength
+
+    Returns:
+        sample thickness
+    """
     return np.abs(
         waveln_1
         * waveln_2
@@ -530,17 +753,37 @@ def adv_dist_calc(waveln_1: float, waveln_2: float) -> float:
 
 
 def rolling_window(a: np.ndarray, window: int) -> np.ndarray:
-    """Returns rolling windows."""
+    """Returns rolling windows.
+
+    Args:
+        a: array
+
+        window: number of element on the window
+
+    Returns:
+        window
+    """
 
     shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
     strides = a.strides + (a.strides[-1],)
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
 
 
-def rolling_dist(
-    dat_X: Optional[np.ndarray] = None, dat_Y: Optional[np.ndarray] = None,
-) -> float:
-    """Returns mean of distances obtained using rolling windows."""
+def rolling_dist(dat_X: np.ndarray, dat_Y: np.ndarray,) -> float:
+    """Returns mean of distances obtained using rolling windows.
+    
+    Finds the distance between the intensity maxima. For each pair of highs,
+    it considers the depth. Then it returns the average of all the resulting 
+    thicknesses.
+
+    Args:
+        dat_X: array of wavelength
+
+        dat_Y: array of intenseties
+
+    Returns:
+        mean value of thickness
+    """
 
     idx, _ = find_peaks(dat_Y)
     fragments = rolling_window(dat_X[idx] / 10000.0, 2)
@@ -557,7 +800,14 @@ def rolling_dist(
 
 
 def get_files_list(path_to_dir: str) -> np.ndarray:
-    """Returns list of files in given directory."""
+    """Returns list of files in given directory.
+
+    Args:
+        path_to_dir: path to directory
+
+    Returns:
+        list of files names
+    """
 
     f = []
 
@@ -569,7 +819,14 @@ def get_files_list(path_to_dir: str) -> np.ndarray:
 
 
 def refection_coef_read(path_to_file: str) -> Tuple[np.ndarray, np.ndarray]:
-    """Reads the data for reflection coefficient from file."""
+    """Reads the data for reflection coefficient from file.
+    
+    Args:
+        path_to_file: path to file
+
+    Returns:
+        lists of wavelength and intensities
+    """
 
     if os.path.exists(path_to_file):
         n_lam = pd.read_csv(
@@ -579,12 +836,37 @@ def refection_coef_read(path_to_file: str) -> Tuple[np.ndarray, np.ndarray]:
 
 
 def thickness(wavelength: float, period: float, n: float) -> float:
-    """Calculates the thickness of the sample using interference method."""
+    """Calculates the thickness of the sample using interference method.
+    
+    Simplified thickness calculation method 
+
+    Args:
+        wavelength: wavelength
+
+        period: period between intensities maximums
+
+        n: reflection coefficient for given wavelength
+
+    Returns:
+        sample thickness
+    """
 
     return np.round(wavelength ** 2 / (2.0 * n * period * 10000.0), 2)
 
 
 def textstr(wvln: float, period: float, n_true: float) -> str:
+    """Returns the standard caption for a graph.
+
+    Args:
+        wvln: wavelength
+
+        period: period between intensities maximums
+
+        n_true: reflection coefficient for given wavelength
+
+    Returns:
+        caption
+    """
 
     return "\n".join(
         (
@@ -608,11 +890,16 @@ def sellmeyer_eq(
     
     Args:
         wavelength: List of wavelengths.
+
         a: empirical coefficient, default value is given for GaAs
+
         b: empirical coefficient, default value is given for GaAs
+
         c2: empirical coefficient, default value is given for GaAs
+
         keys: A sequence of strings representing the key of each table row
             to fetch.
+
         other_silly_variable: Another optional variable, that has a much
             longer name than the other args, and which does nothing.
 
@@ -626,7 +913,22 @@ def sellmeyer_eq(
 def fourier_analysis(
     x: np.ndarray, y: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray, float, float]:
-    """Perfoms FFT and searches for main frequencies."""
+    """Performs FFT and searches for main frequencies.
+
+    Args:
+        x: array of wavelengths
+
+        y: array of intensities
+
+    Returns:
+        psd: amplitudes
+
+        freq: frequencies
+
+        true_freq: frequency of interest
+        
+        true_psd_max: amplitude of interest
+    """
 
     sp = np.fft.fft(y)
     freq = np.fft.fftfreq(y.shape[-1], np.diff(x).mean())
@@ -639,9 +941,3 @@ def fourier_analysis(
     true_psd = new_psd[maxInd]
 
     return psd, freq, true_freq[true_psd == true_psd.max()], true_psd.max()
-
-
-if __name__ == "__main__":
-    app = MyApp()
-    app.MainLoop()
-    wx.Exit()

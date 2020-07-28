@@ -48,7 +48,7 @@ class MyFrame(wx.Frame):
         """Initializes all the panels and set sizers.
     
         There are 3 panels: control panel for control buttons, graph panel
-        for raw data visualization and preperation and graphs panel which
+        for raw data visualization and preparation and graphs panel which
         switches from graph panel and shows stages of data process.
 
         Args:

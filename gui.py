@@ -112,7 +112,7 @@ class MyPanel(wx.Panel):
         )
 
         refl_files = get_files_list(self.cwd)
-        self.wvlngh, self.n_coef = refection_coef_read(
+        self.wavelength, self.n_coef = refection_coef_read(
             os.path.join(self.cwd, refl_files[1])
         )
         cb = wx.ComboBox(
@@ -157,7 +157,7 @@ class MyPanel(wx.Panel):
         """
 
         i = event.GetString()
-        self.wvlngh, self.n_coef = refection_coef_read(os.path.join(self.cwd, i))
+        self.wavelength, self.n_coef = refection_coef_read(os.path.join(self.cwd, i))
 
     def on_open(self, event: wx.Event) -> None:
         """Open a raw data to process.

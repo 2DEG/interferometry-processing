@@ -147,11 +147,11 @@ def refection_coef_read(path_to_file: str) -> Tuple[np.ndarray, np.ndarray]:
 
 
 
-def textstr(wvln: float, period: float, n_true: float) -> str:
+def textstr(wavelength: float, period: float, n_true: float) -> str:
     """Returns the standard caption for a graph.
 
     Args:
-        wvln: wavelength
+        wavelength: wavelength
 
         period: period between intensities maximums
 
@@ -163,7 +163,7 @@ def textstr(wvln: float, period: float, n_true: float) -> str:
     from analysis import thickness
     return "\n".join(
         (
-            r"$h=%.2f$ um" % (thickness(wvln, period, n_true),),
+            r"$h=%.2f$ um" % (thickness(wavelength, period, n_true),),
             r"$f =%.2f \frac{1}{\AA}$" % (1 / period,),
             r"$\rho=%.2f\AA$" % (period,),
         )

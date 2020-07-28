@@ -23,24 +23,24 @@ def find_nearest(array: np.ndarray, value: float) -> float:
     return (np.abs(array - value)).argmin()
 
 
-def adv_dist_calc(waveln_1: float, waveln_2: float) -> float:
+def adv_dist_calc(wavelength_1: float, wavelength_2: float) -> float:
     """Thickness calculation method.
     
     Calculation of thickness from exact wavelengths and refractive index. This
     method is used with rolling windows approach which result with good accuracy. 
 
     Args:
-        waveln_1: first wavelength
+        wavelength_1: first wavelength
 
-        waveln_2: first wavelength
+        wavelength_2: first wavelength
 
     Returns:
         sample thickness
     """
     return np.abs(
-        waveln_1
-        * waveln_2
-        / (2 * (waveln_1 * sellmeyer_eq(waveln_2) - waveln_2 * sellmeyer_eq(waveln_1)))
+        wavelength_1
+        * wavelength_2
+        / (2 * (wavelength_1 * sellmeyer_eq(wavelength_2) - wavelength_2 * sellmeyer_eq(wavelength_1)))
     )
 
 
@@ -66,7 +66,7 @@ def rolling_dist(dat_X: np.ndarray, dat_Y: np.ndarray,) -> float:
     idx, _ = find_peaks(dat_Y)
     fragments = rolling_window(dat_X[idx] / 10000.0, 2)
     dist = np.array(
-        list(map(lambda x: adv_dist_calc(waveln_1=x[0], waveln_2=x[1],), fragments,))
+        list(map(lambda x: adv_dist_calc(wavelength_1=x[0], wavelength_2=x[1],), fragments,))
     )
 
     # wv_add = wv_add[:-1]
@@ -258,9 +258,9 @@ def make_report(
         # Refractive index
         draw_data(
             panel.graphs.graphThree,
-            panel.wvlngh,
+            panel.wavelength,
             panel.n_coef,
-            scatter_x=[panel.wvlngh[n_wv_idx]],
+            scatter_x=[panel.wavelength[n_wv_idx]],
             scatter_y=[n_true],
             name="Refractive index",
             label_l="n = " + str(n_true),
@@ -322,7 +322,7 @@ def data_prep(panel) -> Tuple[np.ndarray, np.ndarray, float, float, float]:
         dat_Y = panel.data[x:y, 1]
 
         wavelength = dat_X[int(dat_X.shape[-1] / 2)]
-        n_wv_idx = find_nearest(panel.wvlngh, wavelength / 10000.0)
+        n_wv_idx = find_nearest(panel.wavelength, wavelength / 10000.0)
         n_true = panel.n_coef[n_wv_idx]
 
         return dat_X, dat_Y, wavelength, n_wv_idx, n_true

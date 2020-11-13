@@ -14,7 +14,7 @@ from typing import Tuple, Optional, List, Union
 from scipy.signal import find_peaks  # type: ignore
 
 from utils import get_files_list, draw_data, refection_coef_read
-from analysis import rolling_dist, thickness, fourier_analysis, make_report, data_prep
+from analysis import rolling_dist, thickness, fourier_analysis, make_report, data_prep, make_calibration, calibrated_thickness
 
 import numpy as np  # type: ignore
 import os
@@ -123,9 +123,14 @@ class MyPanel(wx.Panel):
         self.st.SetLabel("Refractive index file:")
         # -----------------
 
-        self.auto = wx.Button(self, label="Auto GaAs depth")
+        self.auto = wx.Button(self, label="Sellmeyers' GaAs depth")
         self.auto.Enable(False)
         self.auto.Bind(wx.EVT_BUTTON, self.calc_auto)
+        # ------------------
+
+        self.auto_cal = wx.Button(self, label="Auto GaAs depth")
+        self.auto_cal.Enable(False)
+        self.auto_cal.Bind(wx.EVT_BUTTON, self.calc_auto_calibrate)
         # ------------------
 
         self.calc_btn = wx.Button(self, label="Calculate depth")
@@ -133,11 +138,18 @@ class MyPanel(wx.Panel):
         self.calc_btn.Bind(wx.EVT_BUTTON, self.calc_choice)
         # ------------------
 
+        self.calibration = wx.Button(self, label="Add calibration")
+        self.calibration.Enable(False)
+        self.calibration.Bind(wx.EVT_BUTTON, self.calibraion)
+        # ------------------
+
         self.chk_box = wx.CheckBox(self, label="Full Report")
 
         hbox.Add(self.btn, 0, wx.CENTER, 5)
         hbox.Add(self.auto, 0, wx.CENTER, 5)
-        hbox.Add(self.calc_btn, 0, wx.CENTER | wx.BOTTOM, 10)
+        hbox.Add(self.auto_cal, 0, wx.CENTER, 5)
+        hbox.Add(self.calc_btn, 0, wx.CENTER | wx.BOTTOM, 5)
+        hbox.Add(self.calibration, 0, wx.CENTER | wx.BOTTOM, 10)
         hbox.Add(self.st, 0, wx.EXPAND | wx.ALIGN_CENTER_HORIZONTAL | wx.TOP, 5)
         hbox.Add(cb, 0, wx.EXPAND | wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 1)
         hbox.Add(self.chk_box, 0, wx.EXPAND | wx.ALIGN_CENTER_HORIZONTAL | wx.TOP, 5)
@@ -194,6 +206,8 @@ class MyPanel(wx.Panel):
         draw_data(self.graph, self.data[:, 0], self.data[:, 1], name="Spectrum")
 
         self.auto.Enable(True)
+        self.calibration.Enable(True)
+        self.auto_cal.Enable(True)
 
         if self.graphs.IsShown():
             self.graphs.Hide()
@@ -201,6 +215,16 @@ class MyPanel(wx.Panel):
 
         self.Parent.Layout()
         self.Parent.Fit()
+
+    def calibraion(self, event: wx.Event) -> None:
+        self.graph.toolbar.x = [0, 9050.0, 9200.0]
+        dat_X, dat_Y, wavelength, n_wv_idx, n_true = data_prep(self)
+        make_calibration(dat_X, dat_Y, 623)
+        
+
+        msg = "Ok!"
+        dial = wx.MessageDialog(None, msg, "Info", wx.OK)
+        dial.ShowModal()
 
     def calc_choice(self, event: wx.Event) -> None:
         """Executes calculation based on checked/unchecked box.
@@ -223,6 +247,16 @@ class MyPanel(wx.Panel):
             while self.graph.toolbar.lx:
                 self.graph.toolbar.lx.pop(0).remove()
             self.graph.canvas.draw()
+
+    
+    def calc_auto_calibrate(self, event: wx.Event) -> None:
+        self.graph.toolbar.x = [0, 9050.0, 9200.0]
+        dat_X, dat_Y, wavelength, n_wv_idx, n_true = data_prep(self)
+    
+        h = calibrated_thickness(dat_X=dat_X, dat_Y=dat_Y, n_wave=self.wavelength, n_coef=self.n_coef)
+        msg = "Sample thickness is {h} um".format(h=h)
+        dial = wx.MessageDialog(None, msg, "Info", wx.OK)
+        dial.ShowModal()
 
     def calc_auto(self, event: wx.Event) -> None:
         """Returns thickness of the sample in a message box.

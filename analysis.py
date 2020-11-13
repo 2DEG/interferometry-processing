@@ -23,7 +23,7 @@ def find_nearest(array: np.ndarray, value: float) -> float:
     return (np.abs(array - value)).argmin()
 
 
-def adv_dist_calc(wavelength_1: float, wavelength_2: float) -> float:
+def adv_dist_calc(wavelength_1: float, wavelength_2: float, n_1: float, n_2: float) -> float:
     """Thickness calculation method.
     
     Calculation of thickness from exact wavelengths and refractive index. This
@@ -43,12 +43,26 @@ def adv_dist_calc(wavelength_1: float, wavelength_2: float) -> float:
         / (
             2
             * (
-                wavelength_1 * sellmeyer_eq(wavelength_2)
-                - wavelength_2 * sellmeyer_eq(wavelength_1)
+                wavelength_1 * n_2
+                - wavelength_2 * n_1
             )
         )
     )
 
+def find_reflection_coef(wavelength_1: float, wavelength_2: float, n_1: float, h: float) -> float:
+    return np.abs((wavelength_1*wavelength_2 - 2*wavelength_2*h*n_1) / (2*h*wavelength_1))
+
+def make_calibration(dat_X: np.ndarray, dat_Y: np.ndarray, h: float) -> float:
+    idx, _ = find_peaks(dat_Y)
+    fragments = rolling_window(dat_X[idx] / 10000.0, 2)
+    n_coef = np.zeros(len(fragments))
+    n_coef[0] = sellmeyer_eq(fragments[0,0])
+    sets = dat_X[idx] /10000
+    for i, x in enumerate(fragments[1:]):
+        n_coef[i+1] = find_reflection_coef(x[0], x[1], n_coef[i], h)
+    
+    print(len(dat_X[idx]), fragments[0,0], sets[0], np.array(list(zip(sets,n_coef))))
+    np.savetxt("GaAs_Calibration.csv", np.array(list(zip(sets,n_coef))), delimiter=',')
 
 def rolling_dist(dat_X: np.ndarray, dat_Y: np.ndarray,) -> float:
     """Returns mean of distances obtained using rolling windows.
@@ -71,7 +85,7 @@ def rolling_dist(dat_X: np.ndarray, dat_Y: np.ndarray,) -> float:
     dist = np.array(
         list(
             map(
-                lambda x: adv_dist_calc(wavelength_1=x[0], wavelength_2=x[1],),
+                lambda x: adv_dist_calc(wavelength_1=x[0], wavelength_2=x[1], n_1=sellmeyer_eq(x[0]), n_2=sellmeyer_eq(x[1])),
                 fragments,
             )
         )
@@ -168,6 +182,24 @@ def fourier_analysis(
     true_psd = new_psd[maxInd]
 
     return psd, freq, true_freq[true_psd == true_psd.max()], true_psd.max()
+
+
+def calibrated_thickness(dat_X: np.ndarray, dat_Y: np.ndarray, n_wave: np.ndarray, n_coef: np.ndarray) -> float:
+    idx, _ = find_peaks(dat_Y)
+    fragments = rolling_window(dat_X[idx] / 10000.0, 2)
+    
+    dist = np.array(
+        list(
+            map(
+                lambda x: adv_dist_calc(wavelength_1=x[0], wavelength_2=x[1], n_1=n_coef[find_nearest(n_wave, x[0])], n_2=n_coef[find_nearest(n_wave, x[1])]),
+                fragments,
+            )
+        )
+    )
+
+    return np.round(dist.mean())
+
+
 
 
 def make_report(

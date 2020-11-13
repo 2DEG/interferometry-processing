@@ -13,8 +13,8 @@ from typing import Tuple, Optional, List, Union
 
 from scipy.signal import find_peaks  # type: ignore
 
-from utils import *
-from analysis import *
+from utils import get_files_list, draw_data, refection_coef_read
+from analysis import rolling_dist, thickness, fourier_analysis, make_report, data_prep
 
 import numpy as np  # type: ignore
 import os
@@ -285,7 +285,7 @@ class MyPanel(wx.Panel):
 
         dial = wx.MessageDialog(None, msg, "Info", wx.OK)
         dial.ShowModal()
-        self.calc_btn.Enable(False)    
+        self.calc_btn.Enable(False)
 
     def draw_graphs(self) -> None:
         """Prepares canvas for 6 additional plots with supportive info.
@@ -459,7 +459,3 @@ class MyNavigationToolbar(NavigationToolbar):
             self.canvas.restore_region(self.background)
             self.Parent.axes.draw_artist(line)
             self.canvas.figure.canvas.blit(line.axes.bbox)
-
-
-
-

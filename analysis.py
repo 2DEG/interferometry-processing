@@ -1,9 +1,9 @@
-
 import numpy as np  # type: ignore
 from typing import Tuple, Optional, List, Union
 from scipy.signal import find_peaks  # type: ignore
-import pandas as pd
+import pandas as pd # type: ignore
 from utils import rolling_window, draw_data, textstr
+
 
 def find_nearest(array: np.ndarray, value: float) -> float:
     """Finds closest value in array for given one.
@@ -40,11 +40,14 @@ def adv_dist_calc(wavelength_1: float, wavelength_2: float) -> float:
     return np.abs(
         wavelength_1
         * wavelength_2
-        / (2 * (wavelength_1 * sellmeyer_eq(wavelength_2) - wavelength_2 * sellmeyer_eq(wavelength_1)))
+        / (
+            2
+            * (
+                wavelength_1 * sellmeyer_eq(wavelength_2)
+                - wavelength_2 * sellmeyer_eq(wavelength_1)
+            )
+        )
     )
-
-
-
 
 
 def rolling_dist(dat_X: np.ndarray, dat_Y: np.ndarray,) -> float:
@@ -66,7 +69,12 @@ def rolling_dist(dat_X: np.ndarray, dat_Y: np.ndarray,) -> float:
     idx, _ = find_peaks(dat_Y)
     fragments = rolling_window(dat_X[idx] / 10000.0, 2)
     dist = np.array(
-        list(map(lambda x: adv_dist_calc(wavelength_1=x[0], wavelength_2=x[1],), fragments,))
+        list(
+            map(
+                lambda x: adv_dist_calc(wavelength_1=x[0], wavelength_2=x[1],),
+                fragments,
+            )
+        )
     )
 
     # wv_add = wv_add[:-1]
@@ -94,7 +102,6 @@ def thickness(wavelength: float, period: float, n: float) -> float:
     """
 
     return np.round(wavelength ** 2 / (2.0 * n * period * 10000.0), 2)
-
 
 
 def sellmeyer_eq(
@@ -162,15 +169,16 @@ def fourier_analysis(
 
     return psd, freq, true_freq[true_psd == true_psd.max()], true_psd.max()
 
+
 def make_report(
-        panel,
-        dat_X: np.ndarray,
-        dat_Y: np.ndarray,
-        wavelength: float = 9000.0,
-        n_wv_idx: Optional[float] = None,
-        n_true=3.54,
-    ) -> None:
-        """Draws another panel covered with plots filled with additional info.
+    panel,
+    dat_X: np.ndarray,
+    dat_Y: np.ndarray,
+    wavelength: float = 9000.0,
+    n_wv_idx: Optional[float] = None,
+    n_true=3.54,
+) -> None:
+    """Draws another panel covered with plots filled with additional info.
     
         Performs full calculations of sample thickness. Draws graphs of all the 
         intermediate steps on the graphs panel.
@@ -190,104 +198,105 @@ def make_report(
             None
         """
 
-        panel.calc_btn.Enable(False)
+    panel.calc_btn.Enable(False)
 
-        # dial = wx.ProgressDialog('Progress', 'Computation could take some time', maximum=100, parent=panel)
-        # dial.Update(5)
+    # dial = wx.ProgressDialog('Progress', 'Computation could take some time', maximum=100, parent=panel)
+    # dial.Update(5)
 
-        # Moving average method
-        idx, peaks = find_peaks(dat_Y)
-        draw_data(
-            panel.graphs.graphFour,
-            dat_X,
-            dat_Y,
-            scatter_x=dat_X[idx],
-            scatter_y=dat_Y[idx],
-            name="Peaks detection",
-        )
-        periodicity = pd.Series(dat_X[idx], index=dat_X[idx]).diff().dropna()
+    # Moving average method
+    idx, peaks = find_peaks(dat_Y)
+    draw_data(
+        panel.graphs.graphFour,
+        dat_X,
+        dat_Y,
+        scatter_x=dat_X[idx],
+        scatter_y=dat_Y[idx],
+        name="Peaks detection",
+    )
+    periodicity = pd.Series(dat_X[idx], index=dat_X[idx]).diff().dropna()
 
-        periodicity_mean = periodicity.rolling(window=10, center=True).mean().values
+    periodicity_mean = periodicity.rolling(window=10, center=True).mean().values
 
-        period = periodicity_mean[int(periodicity_mean.shape[-1] / 2)]
+    period = periodicity_mean[int(periodicity_mean.shape[-1] / 2)]
 
-        draw_data(
-            panel.graphs.graphOne,
-            periodicity.index.values,
-            periodicity_mean,
-            name="Average periodicity",
-            text=textstr(wavelength, period, n_true),
-        )
-        # dial.Update(20)
+    draw_data(
+        panel.graphs.graphOne,
+        periodicity.index.values,
+        periodicity_mean,
+        name="Average periodicity",
+        text=textstr(wavelength, period, n_true),
+    )
+    # dial.Update(20)
 
-        # Fourier methods
-        panel.psd, panel.freq, true_freq, true_ind = fourier_analysis(dat_X, dat_Y)
-        reverse = np.zeros_like(dat_Y)
-        reverse[panel.psd == true_ind] = true_freq
-        reverse = np.real(np.fft.ifft(reverse))
+    # Fourier methods
+    panel.psd, panel.freq, true_freq, true_ind = fourier_analysis(dat_X, dat_Y)
+    reverse = np.zeros_like(dat_Y)
+    reverse[panel.psd == true_ind] = true_freq
+    reverse = np.real(np.fft.ifft(reverse))
 
-        ## Flattening Process
-        coef = np.polyfit(dat_X, dat_Y, 1)
-        poly1d_fn = np.poly1d(coef)
-        new_dat = dat_Y - poly1d_fn(dat_X)
+    ## Flattening Process
+    coef = np.polyfit(dat_X, dat_Y, 1)
+    poly1d_fn = np.poly1d(coef)
+    new_dat = dat_Y - poly1d_fn(dat_X)
 
-        panel.psd, panel.freq, true_freq, true_ind = fourier_analysis(
-            dat_X, new_dat - 200 * reverse
-        )
-        new_dat = new_dat / new_dat.max()
+    panel.psd, panel.freq, true_freq, true_ind = fourier_analysis(
+        dat_X, new_dat - 200 * reverse
+    )
+    new_dat = new_dat / new_dat.max()
 
-        draw_data(
-            panel.graphs.graphTwo,
-            panel.freq,
-            panel.psd,
-            # style="o",
-            text=textstr(wavelength, 1 / true_freq, n_true),
-            name="FFT after signal flattening",
-            x_label=r"Frequency $[\frac{1}{\AA}]$",
-        )
-        # dial.Update(40)
-        draw_data(panel.graphs.graphFive, dat_X, reverse * new_dat.max() / reverse.max())
-        draw_data(
-            panel.graphs.graphFive,
-            dat_X,
-            new_dat,
-            name="IFFT and flattened signal",
-            clear=False,
-        )
+    draw_data(
+        panel.graphs.graphTwo,
+        panel.freq,
+        panel.psd,
+        # style="o",
+        text=textstr(wavelength, 1 / true_freq, n_true),
+        name="FFT after signal flattening",
+        x_label=r"Frequency $[\frac{1}{\AA}]$",
+    )
+    # dial.Update(40)
+    draw_data(panel.graphs.graphFive, dat_X, reverse * new_dat.max() / reverse.max())
+    draw_data(
+        panel.graphs.graphFive,
+        dat_X,
+        new_dat,
+        name="IFFT and flattened signal",
+        clear=False,
+    )
 
-        # Refractive index
-        draw_data(
-            panel.graphs.graphThree,
-            panel.wavelength,
-            panel.n_coef,
-            scatter_x=[panel.wavelength[n_wv_idx]],
-            scatter_y=[n_true],
-            name="Refractive index",
-            label_l="n = " + str(n_true),
-            x_label=r"Wavelength [um]",
-            y_label=r"$n(\lambda)$",
-        )
-        # dial.Update(60)
+    # Refractive index
+    draw_data(
+        panel.graphs.graphThree,
+        panel.wavelength,
+        panel.n_coef,
+        scatter_x=[panel.wavelength[n_wv_idx]],
+        scatter_y=[n_true],
+        name="Refractive index",
+        label_l="n = " + str(n_true),
+        x_label=r"Wavelength [um]",
+        y_label=r"$n(\lambda)$",
+    )
+    # dial.Update(60)
 
-        draw_data(
-            panel.graphs.graphSix,
-            0,
-            0,
-            text=r"$h=\frac{\lambda^2}{2n \Delta\lambda}$",
-            name="Execution Formula",
-            size=16,
-        )
-        # dial.Update(100)
+    draw_data(
+        panel.graphs.graphSix,
+        0,
+        0,
+        text=r"$h=\frac{\lambda^2}{2n \Delta\lambda}$",
+        name="Execution Formula",
+        size=16,
+    )
+    # dial.Update(100)
 
-        if panel.graph.IsShown():
-            panel.graph.Hide()
-            panel.graphs.Show()
+    if panel.graph.IsShown():
+        panel.graph.Hide()
+        panel.graphs.Show()
 
-        panel.Parent.Layout()
-        panel.Parent.Fit()   
+    panel.Parent.Layout()
+    panel.Parent.Fit()
+
 
 def data_prep(panel) -> Tuple[np.ndarray, np.ndarray, float, float, float]:
-        """Prepares data to be analysed.
+    """Prepares data to be analysed.
 
         Cuts data at user-specified boundaries and prepares them for depth calculations.
         Selects the average wavelength of the range and finds the corresponding refractive
@@ -307,22 +316,22 @@ def data_prep(panel) -> Tuple[np.ndarray, np.ndarray, float, float, float]:
 
             n_true: value of appropriate refractive index for given wavelength
         """
-        panel.x = panel.graph.toolbar.x[1:]
-        panel.graph.toolbar.x[:] = []
-        panel.x.sort()
+    panel.x = panel.graph.toolbar.x[1:]
+    panel.graph.toolbar.x[:] = []
+    panel.x.sort()
 
-        try:
-            len(panel.x) != 0
-        except:
-            print("Processing range not specified")
+    try:
+        len(panel.x) != 0
+    except:
+        print("Processing range not specified")
 
-        x = np.searchsorted(panel.data[:, 0], [panel.x[0]])[0]
-        y = np.searchsorted(panel.data[:, 0], [panel.x[1]])[0]
-        dat_X = panel.data[x:y, 0]
-        dat_Y = panel.data[x:y, 1]
+    x = np.searchsorted(panel.data[:, 0], [panel.x[0]])[0]
+    y = np.searchsorted(panel.data[:, 0], [panel.x[1]])[0]
+    dat_X = panel.data[x:y, 0]
+    dat_Y = panel.data[x:y, 1]
 
-        wavelength = dat_X[int(dat_X.shape[-1] / 2)]
-        n_wv_idx = find_nearest(panel.wavelength, wavelength / 10000.0)
-        n_true = panel.n_coef[n_wv_idx]
+    wavelength = dat_X[int(dat_X.shape[-1] / 2)]
+    n_wv_idx = find_nearest(panel.wavelength, wavelength / 10000.0)
+    n_true = panel.n_coef[n_wv_idx]
 
-        return dat_X, dat_Y, wavelength, n_wv_idx, n_true
+    return dat_X, dat_Y, wavelength, n_wv_idx, n_true

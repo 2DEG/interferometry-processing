@@ -1,10 +1,12 @@
 import numpy as np  # type: ignore
-import pandas as pd
+import pandas as pd  # type: ignore
+# from gui import MyPanel 
 
 from typing import Tuple, Optional, List, Union
 
 
 import os
+
 
 def draw_data(
     graphNum,
@@ -110,6 +112,7 @@ def rolling_window(a: np.ndarray, window: int) -> np.ndarray:
     strides = a.strides + (a.strides[-1],)
     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
 
+
 def get_files_list(path_to_dir: str) -> np.ndarray:
     """Returns list of files in given directory.
 
@@ -146,7 +149,6 @@ def refection_coef_read(path_to_file: str) -> Tuple[np.ndarray, np.ndarray]:
     return n_lam["x"].values, n_lam["y"].values
 
 
-
 def textstr(wavelength: float, period: float, n_true: float) -> str:
     """Returns the standard caption for a graph.
 
@@ -161,6 +163,7 @@ def textstr(wavelength: float, period: float, n_true: float) -> str:
         caption
     """
     from analysis import thickness
+
     return "\n".join(
         (
             r"$h=%.2f$ um" % (thickness(wavelength, period, n_true),),
